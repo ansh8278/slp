@@ -33,13 +33,42 @@ export async function generateMetadata(): Promise<Metadata> {
 export const viewport: Viewport = { themeColor: "#050507", colorScheme: "dark" };
 
 import { ScriptInjector } from "@/components/ScriptInjector";
+import { prisma } from "@/lib/db";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  let headerCode = "";
+  let footerCode = "";
+  let pageBodyCodes: Record<string, string> = {};
+
+  try {
+    const script = await prisma.customScript.findUnique({ where: { id: "default" } });
+    if (script) {
+      headerCode = script.headerCode || "";
+      footerCode = script.footerCode || "";
+      pageBodyCodes = (script.pageBodyCodes as Record<string, string>) || {};
+    }
+  } catch (e) {
+    console.warn("RootLayout script fetch error:", e);
+  }
+
+  const globalBodyCode = pageBodyCodes["global"] || "";
+
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${plusJakarta.variable} ${jetbrains.variable} ${pacifico.variable}`}>
+      <head>
+        {headerCode && (
+          <div dangerouslySetInnerHTML={{ __html: headerCode }} style={{ display: "contents" }} />
+        )}
+      </head>
       <body>
+        {globalBodyCode && (
+          <div dangerouslySetInnerHTML={{ __html: globalBodyCode }} style={{ display: "contents" }} />
+        )}
         {children}
         <ScriptInjector />
+        {footerCode && (
+          <div dangerouslySetInnerHTML={{ __html: footerCode }} style={{ display: "contents" }} />
+        )}
       </body>
     </html>
   );
