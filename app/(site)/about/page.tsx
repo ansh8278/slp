@@ -106,7 +106,7 @@ export default async function AboutPage() {
         <Tilt3D maxTilt={6} scale={1.01} className="shell px-0">
           <div className="reveal-mask relative aspect-[21/9] w-full overflow-hidden rounded-3xl bg-ink-2 px-0 md:aspect-[21/7] shadow-2xl">
             <Image
-              src="/brand/podcast-art.png"
+              src="/brand/podcast-hosts-art.png"
               alt="Security Leader Podcast cover artwork"
               fill
               sizes="100vw"
