@@ -1,0 +1,289 @@
+"use client";
+
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import { usePlayer, PlayGlyph } from "./Player";
+import { Tilt3D } from "./Tilt3D";
+import {
+  DoodleShield,
+  DoodleMic,
+  DoodleLock,
+  DoodleSparkles,
+  DoodleRadar,
+  DoodleHeadphones,
+  DoodleKey,
+  DoodleEye,
+  DoodleSoundwave,
+} from "./DoodleIcons";
+
+type HeroContent = {
+  eyebrow: string;
+  headlineLead: string;
+  headlineEmphasis: string;
+  headlineTail: string;
+  intro: string;
+  primaryCtaLabel: string;
+  secondaryCtaLabel: string;
+};
+
+type Latest = { youtubeId: string; title: string; dateLabel: string; thumbnail: string } | null;
+
+/**
+ * Deterministic bar heights — no Math.random, so SSR and client agree.
+ */
+const BARS = Array.from({ length: 48 }, (_, i) => ({
+  h: Math.round(16 + Math.abs(Math.sin(i * 1.7) * 62) + Math.abs(Math.cos(i * 0.9) * 20)),
+  dur: Math.round((0.8 + ((i * 37) % 11) / 10) * 10) / 10,
+  delay: Math.round((((i * 53) % 19) / 20) * 100) / 100,
+}));
+
+function Waveform({ active }: { active: boolean }) {
+  return (
+    <div aria-hidden className="flex h-[80px] w-full items-end gap-[3px] perspective-1000">
+      {BARS.map((b, i) => (
+        <span
+          key={i}
+          className="block flex-1 origin-bottom rounded-full transition-colors duration-500"
+          style={{
+            height: `${b.h}%`,
+            background:
+              i % 7 === 0
+                ? "var(--color-signal-bright)"
+                : i % 3 === 0
+                ? "var(--color-signal)"
+                : "color-mix(in srgb, var(--color-steel) 34%, transparent)",
+            animation: `slp-bar ${b.dur}s ease-in-out ${b.delay}s infinite`,
+            animationPlayState: active ? "running" : "paused",
+            transform: `translateZ(${Math.round(Math.sin(i) * 20)}px)`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+export function Hero({ content, latest }: { content: HeroContent; latest: Latest }) {
+  const reduce = useReducedMotion();
+  const play = usePlayer();
+
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    const onVis = () => setVisible(!document.hidden);
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
+
+  const rise = (delay: number) => ({
+    initial: { opacity: 0, y: 30 },
+    animate: { opacity: 1, y: 0 },
+    transition: reduce
+      ? { duration: 0, delay: 0 }
+      : { delay, duration: 0.95, ease: [0.16, 1, 0.3, 1] as const },
+  });
+
+  return (
+    <section className="relative grid min-h-[100svh] content-end overflow-hidden px-[clamp(18px,4vw,56px)] pt-[clamp(110px,14vh,170px)] pb-[clamp(32px,5vh,64px)] perspective-1000">
+      
+      {/* 3D Dynamic Ambient Atmosphere */}
+      <div aria-hidden className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        
+        {/* Animated Radial Drift */}
+        <div
+          className="absolute inset-[-15%] opacity-75"
+          style={{
+            background:
+              "radial-gradient(58% 46% at 76% 22%, rgba(31,121,192,0.32), transparent 70%), radial-gradient(46% 40% at 12% 78%, rgba(130,201,30,0.16), transparent 72%), radial-gradient(38% 32% at 48% 10%, rgba(62,155,230,0.16), transparent 70%)",
+            animation: "slp-drift 24s ease-in-out infinite",
+          }}
+        />
+
+        {/* Dynamic 3D Floating Orbs */}
+        <div className="absolute top-[15%] right-[10%] h-80 w-80 rounded-full bg-gradient-to-br from-signal-bright/25 to-transparent blur-3xl animate-float-3d" />
+        <div
+          className="absolute bottom-[20%] left-[6%] h-96 w-96 rounded-full bg-gradient-to-tr from-signal/20 via-signal-bright/10 to-transparent blur-3xl animate-float-3d"
+          style={{ animationDelay: "-6s" }}
+        />
+        <div
+          className="absolute top-[45%] left-[45%] h-64 w-64 rounded-full bg-radial from-bone/10 to-transparent blur-2xl animate-float-3d"
+          style={{ animationDelay: "-12s" }}
+        />
+
+        {/* 3D Cyber Grid Matrix Lines */}
+        <div
+          className="absolute inset-0 opacity-[0.18]"
+          style={{
+            backgroundImage:
+              "linear-gradient(color-mix(in srgb, var(--color-steel) 10%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--color-steel) 10%, transparent) 1px, transparent 1px)",
+            backgroundSize: "clamp(60px, 7vw, 110px) clamp(60px, 7vw, 110px)",
+            maskImage: "radial-gradient(75% 60% at 50% 42%, #000 20%, transparent 78%)",
+          }}
+        />
+      </div>
+
+      <div className="shell relative flex w-full flex-col gap-[clamp(18px,3vh,36px)] px-0 z-10">
+        
+        {/* Main Hero 2-Column Layout */}
+        <div className="grid items-center gap-[clamp(30px,4vw,64px)] lg:grid-cols-[1fr_440px] xl:grid-cols-[1fr_500px]">
+          
+          {/* Left Column: Eyebrow, Headlines, Intro, CTAs */}
+          <div className="flex flex-col gap-[clamp(18px,3vh,36px)]">
+            
+            {/* Kicker Badge with Doodle Icons */}
+            <motion.div {...rise(0.15)} className="flex items-center gap-3">
+              <div className="relative h-11 w-11 md:h-14 md:w-14 overflow-hidden rounded-2xl border border-steel/20 bg-ink-3 p-1.5 shadow-lg">
+                <Image src="/brand/logo.png" alt="Security Leader Logo" fill className="object-contain p-1" priority />
+              </div>
+              <span className="block h-px w-8 bg-signal md:w-12" />
+              <div className="inline-flex items-center gap-2 rounded-full border border-steel/20 bg-ink-2/80 px-4 py-1.5 backdrop-blur-md shadow-md">
+                <DoodleShield className="h-4.5 w-4.5" stroke="#3e9be6" />
+                <span className="kicker">{content.eyebrow}</span>
+                <DoodleMic className="h-4.5 w-4.5" stroke="#82c91e" />
+              </div>
+            </motion.div>
+
+            {/* Main Headline */}
+            <h1 className="display m-0 text-[clamp(38px,min(7.5vw,11.5svh),120px)]">
+              {[content.headlineLead, content.headlineEmphasis, content.headlineTail].map((line, i) => (
+                <span key={i} className={`block ${i === 1 ? "overflow-visible py-1" : "overflow-hidden"}`}>
+                  <motion.span
+                    className={`block ${i === 1 ? "funky-text font-normal" : "text-bone"}`}
+                    initial={{ clipPath: "inset(0 0 105% 0)", y: 16 }}
+                    animate={{ clipPath: "inset(-25% -25% -25% -25%)", y: 0 }}
+                    transition={reduce ? { duration: 0 } : { delay: 0.28 + i * 0.11, duration: 1.15, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    {line}
+                  </motion.span>
+                </span>
+              ))}
+            </h1>
+
+            {/* Intro Paragraph */}
+            <motion.p {...rise(0.72)} className="m-0 max-w-[52ch] text-[clamp(14px,1.1vw,17px)] leading-[1.7] text-steel-dim">
+              {content.intro}
+            </motion.p>
+
+            {/* Call To Action Buttons */}
+            <motion.div {...rise(0.84)} className="flex flex-wrap items-center gap-3.5">
+              {latest ? (
+                <button
+                  type="button"
+                  onClick={() => play({ youtubeId: latest.youtubeId, title: latest.title, date: latest.dateLabel })}
+                  className="group inline-flex cursor-pointer items-center gap-3 rounded-full bg-bone px-7 py-4 font-mono text-[11.5px] tracking-[0.18em] text-ink uppercase font-bold transition-all duration-300 hover:scale-105 hover:bg-signal hover:text-bone shadow-xl hover:shadow-signal/30"
+                >
+                  <span className="flex h-4 w-3 items-center">
+                    <svg width="11" height="13" viewBox="0 0 14 16" aria-hidden>
+                      <path d="M0 0l14 8-14 8z" fill="currentColor" />
+                    </svg>
+                  </span>
+                  {content.primaryCtaLabel}
+                </button>
+              ) : (
+                <a
+                  href="https://www.youtube.com/channel/UCVTgPtlFP9KvDbnoFQzHTFg"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-3 rounded-full bg-bone px-7 py-4 font-mono text-[11.5px] tracking-[0.18em] text-ink uppercase font-bold transition-all duration-300 hover:scale-105 hover:bg-signal hover:text-bone shadow-xl"
+                >
+                  Watch on YouTube ↗
+                </a>
+              )}
+              
+              <a
+                href="/episodes"
+                className="inline-flex items-center gap-3 rounded-full border border-steel/25 px-7 py-4 font-mono text-[11.5px] tracking-[0.18em] text-steel uppercase transition-all duration-300 hover:scale-105 hover:border-steel hover:text-bone"
+              >
+                {content.secondaryCtaLabel}
+              </a>
+            </motion.div>
+          </div>
+
+          {/* Right Column: 3D Levitating Hero Artwork + Floating Security Doodles */}
+          <motion.div {...rise(0.6)} className="relative hidden lg:flex items-center justify-center translate-z-20">
+            
+
+
+            {/* Floating Security Doodle Badge 2 (Bottom Right) */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.3, duration: 0.8 }}
+              className="absolute -bottom-4 -right-4 z-30 animate-float-3d"
+              style={{ animationDelay: "-4s" }}
+            >
+              <div className="flex items-center gap-2 rounded-full border border-steel/25 bg-ink-3/95 px-4.5 py-2.5 shadow-2xl backdrop-blur-xl font-mono text-xs font-bold text-signal-bright">
+                <DoodleHeadphones className="h-4.5 w-4.5" stroke="#82c91e" />
+                <span>Executive CISO Audio</span>
+              </div>
+            </motion.div>
+
+            {/* Floating Security Doodle Badge 3 (Middle Right) */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 1.5, duration: 0.8 }}
+              className="absolute top-1/2 -right-10 z-30 animate-float-3d"
+              style={{ animationDelay: "-8s" }}
+            >
+              <div className="flex items-center justify-center h-11 w-11 rounded-full border border-steel/25 bg-ink-2/95 shadow-xl backdrop-blur-xl">
+                <DoodleSparkles className="h-5 w-5 text-signal-bright" />
+              </div>
+            </motion.div>
+
+            {/* 3D Tilt Main Artwork */}
+            <Tilt3D maxTilt={14} scale={1.04} className="relative flex items-center justify-center">
+              <div className="relative z-10 h-[520px] w-[520px] xl:h-[600px] xl:w-[600px] drop-shadow-[0_30px_60px_rgba(0,0,0,0.95)] transition-transform duration-700 hover:scale-105">
+                <Image
+                  src="/brand/slp-real-transparent.png"
+                  alt="Security Leader Podcast Artwork"
+                  fill
+                  sizes="(max-width: 1280px) 520px, 600px"
+                  priority
+                  className="object-contain"
+                />
+              </div>
+            </Tilt3D>
+          </motion.div>
+
+        </div>
+
+        {/* Latest Episode Ticket Card with 3D Tilt + Live Equalizer Waveform */}
+        <motion.div {...rise(0.96)} className="mt-2 grid items-end gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
+          {latest ? (
+            <Tilt3D maxTilt={10} scale={1.02} className="max-w-xl">
+              <button
+                type="button"
+                onClick={() => play({ youtubeId: latest.youtubeId, title: latest.title, date: latest.dateLabel })}
+                className="group sheen preserve-3d flex w-full cursor-pointer items-center gap-4 rounded-2xl border border-steel/15 bg-ink-2/85 p-4 text-left backdrop-blur-md transition-all duration-500 hover:border-signal/50 shadow-xl hover:shadow-2xl"
+              >
+                <span className="relative block aspect-video w-[104px] shrink-0 overflow-hidden rounded-xl bg-ink-3 sm:w-[132px] translate-z-20">
+                  <Image src={latest.thumbnail} alt="" fill sizes="132px" className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                  <span className="absolute inset-0 flex items-center justify-center translate-z-40">
+                    <PlayGlyph size={38} />
+                  </span>
+                </span>
+                <span className="flex min-w-0 flex-col gap-1 translate-z-10">
+                  <span className="kicker text-signal-bright flex items-center gap-2">
+                    <DoodleSoundwave className="h-3.5 w-3.5" stroke="#82c91e" /> Latest Broadcast · {latest.dateLabel}
+                  </span>
+                  <span className="line-clamp-2 font-display text-[15px] leading-snug text-bone sm:text-[17px]">
+                    {latest.title}
+                  </span>
+                </span>
+              </button>
+            </Tilt3D>
+          ) : (
+            <span />
+          )}
+
+          {/* Equalizer Waveform */}
+          <div className="hidden justify-self-end lg:block lg:w-full">
+            <Waveform active={visible} />
+          </div>
+        </motion.div>
+
+      </div>
+
+    </section>
+  );
+}

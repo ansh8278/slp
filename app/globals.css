@@ -1,26 +1,213 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* palette sampled directly from public/brand/logo.png + podcast-art.png */
+  --color-ink: #050507;
+  --color-ink-2: #0a0c10;
+  --color-ink-3: #10141a;
+  --color-navy: #0c1826;
+  --color-signal: #1f79c0;
+  --color-signal-bright: #3e9be6;
+  --color-steel: #b8c0c8;
+  --color-steel-dim: #7c858f;
+  --color-bone: #edf1f5;
+
+  --font-display: var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif;
+  --font-sans: var(--font-plus-jakarta), "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-swift: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  * { box-sizing: border-box; }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  html {
+    background: var(--color-ink);
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
   }
+
+  body {
+    margin: 0;
+    background: var(--color-ink);
+    color: var(--color-bone);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Global Soft Rounded Corners Across Whole Site */
+  article, section > div.rounded-md, div.rounded-md, button, input, select, textarea, iframe, img, video {
+    border-radius: 1.5rem !important;
+  }
+
+  ::selection { background: var(--color-signal); color: var(--color-bone); }
+
+  :focus-visible {
+    outline: 2px solid var(--color-signal-bright);
+    outline-offset: 3px;
+    border-radius: 12px;
+  }
+
+  h1, h2, h3 { text-wrap: balance; font-family: var(--font-display); }
+  p { text-wrap: pretty; }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  /* ---- editorial primitives ---- */
+  .shell { width: 100%; max-width: 1480px; margin-inline: auto; padding-inline: clamp(18px, 4vw, 56px); }
+  .rule { border-top: 1px solid color-mix(in srgb, var(--color-steel) 12%, transparent); }
+
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: clamp(10px, 0.72vw, 11px);
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--color-steel-dim);
+  }
+
+  .display {
+    font-family: var(--font-display);
+    font-weight: 500;
+    line-height: 0.94;
+    letter-spacing: -0.022em;
+  }
+
+  /* brushed-steel text fill, taken from the logo medallion */
+  .steel-text {
+    background: linear-gradient(168deg, #f4f7fa 4%, #aab3bc 32%, #6f7982 52%, #d6dde3 72%, #8d969f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .hairline-b { border-bottom: 1px solid color-mix(in srgb, var(--color-steel) 14%, transparent); }
+
+  /* 70s Funky Script Typography style matching reference screenshot */
+  .funky-text {
+    font-family: var(--font-pacifico), cursive, sans-serif;
+    display: inline-block;
+    color: #ffffff !important;
+    text-shadow: 
+      2.5px 2.5px 0px #050507,
+      5px 5px 0px #1f79c0,
+      8px 8px 0px #3e9be6,
+      12px 12px 22px rgba(0, 0, 0, 0.85);
+    -webkit-text-stroke: 1.5px #050507;
+    letter-spacing: 0.02em;
+    padding-inline: 0.12em;
+  }
+
+  .funky-highlight {
+    font-family: var(--font-pacifico), cursive, sans-serif;
+    display: inline-block;
+    color: #3e9be6;
+    text-shadow: 
+      3px 3px 0px #050507,
+      5px 5px 0px #edf1f5;
+    -webkit-text-stroke: 1.2px #050507;
+    padding-inline: 0.12em;
+  }
+
+  /* ---- motion ---- */
+  @keyframes slp-rise { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+  @keyframes slp-rise-blur { from { opacity: 0; transform: translateY(40px); filter: blur(12px); } to { opacity: 1; transform: none; filter: blur(0); } }
+  @keyframes slp-mask-up { from { clip-path: inset(0 0 105% 0); transform: translateY(12px); } to { clip-path: inset(-25% -25% -25% -25%); transform: none; } }
+  @keyframes slp-fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slp-line { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes slp-zoom-out { from { transform: scale(1.14); } to { transform: scale(1); } }
+  @keyframes slp-drift {
+    0%   { transform: translate3d(0,0,0) scale(1.04); }
+    50%  { transform: translate3d(-2.5%, -2%, 0) scale(1.12); }
+    100% { transform: translate3d(0,0,0) scale(1.04); }
+  }
+  @keyframes slp-grain {
+    0% { transform: translate(0,0); } 25% { transform: translate(-4%,3%); }
+    50% { transform: translate(3%,-4%); } 75% { transform: translate(-3%,-2%); } 100% { transform: translate(0,0); }
+  }
+  @keyframes slp-bar { 0%, 100% { transform: scaleY(0.2); } 50% { transform: scaleY(1); } }
+  @keyframes slp-sweep { from { transform: translateX(-120%); } to { transform: translateX(220%); } }
+  @keyframes slp-spin { to { transform: rotate(360deg); } }
+
+  /*
+   * Scroll reveals use native scroll-driven animations (animation-timeline: view()).
+   * Zero JS, zero scroll listeners, compositor-only — the same trick the reference
+   * page uses. Browsers without support just show the element (no observer fallback
+   * needed because the @supports guard never applies the start state).
+   */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal { animation: slp-rise 0.9s var(--ease-out-expo) both; animation-timeline: view(); animation-range: entry 4% entry 46%; }
+      .reveal-blur { animation: slp-rise-blur 1.05s var(--ease-out-expo) both; animation-timeline: view(); animation-range: entry 6% entry 52%; }
+      .reveal-mask { animation: slp-mask-up 1.15s var(--ease-out-expo) both; animation-timeline: view(); animation-range: entry 5% entry 58%; }
+      .reveal-zoom { animation: slp-zoom-out 1.4s var(--ease-out-expo) both; animation-timeline: view(); animation-range: entry 0% cover 62%; }
+      .reveal-line { animation: slp-line 1s var(--ease-swift) both; transform-origin: left; animation-timeline: view(); animation-range: entry 8% entry 50%; }
+      /* stagger children without touching the DOM */
+      .reveal-stagger > * { animation: slp-rise 0.85s var(--ease-out-expo) both; animation-timeline: view(); animation-range: entry 3% entry 44%; }
+    }
+  }
+
+  .parallax-slow {
+    @supports (animation-timeline: view()) {
+      @media (prefers-reduced-motion: no-preference) {
+        animation: slp-parallax linear both;
+        animation-timeline: view();
+        animation-range: cover 0% cover 100%;
+      }
+    }
+  }
+  @keyframes slp-parallax { from { transform: translateY(6%); } to { transform: translateY(-6%); } }
+
+  .marquee-track { animation: slp-marquee 42s linear infinite; }
+  @keyframes slp-marquee { to { transform: translateX(-50%); } }
+
+  /* 3D utilities & keyframes */
+  @keyframes slp-float-3d {
+    0%, 100% { transform: perspective(1000px) translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+    25% { transform: perspective(1000px) translate3d(8px, -15px, 20px) rotateX(4deg) rotateY(-6deg) rotateZ(2deg); }
+    50% { transform: perspective(1000px) translate3d(-10px, -28px, 40px) rotateX(-5deg) rotateY(8deg) rotateZ(-3deg); }
+    75% { transform: perspective(1000px) translate3d(12px, -12px, 15px) rotateX(3deg) rotateY(-4deg) rotateZ(1deg); }
+  }
+
+  @keyframes slp-pulse-3d {
+    0%, 100% { transform: perspective(800px) translateZ(0px) scale(1); }
+    50% { transform: perspective(800px) translateZ(35px) scale(1.05); }
+  }
+
+  .animate-float-3d { animation: slp-float-3d 14s ease-in-out infinite; }
+  .animate-pulse-3d { animation: slp-pulse-3d 6s ease-in-out infinite; }
+
+  .perspective-1000 { perspective: 1000px; }
+  .preserve-3d { transform-style: preserve-3d; }
+  .translate-z-10 { transform: translateZ(10px); }
+  .translate-z-20 { transform: translateZ(20px); }
+  .translate-z-30 { transform: translateZ(30px); }
+  .translate-z-40 { transform: translateZ(40px); }
+  .translate-z-50 { transform: translateZ(50px); }
+
+  /* hover sheen for cards — pure CSS, GPU only */
+  .sheen { position: relative; overflow: hidden; }
+  .sheen::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(105deg, transparent 38%, rgba(237,241,245,0.13) 50%, transparent 62%);
+    transform: translateX(-120%);
+  }
+  @media (hover: hover) {
+    .sheen:hover::after { animation: slp-sweep 0.85s var(--ease-swift); }
+  }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

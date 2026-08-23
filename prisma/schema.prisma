@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Episode {
+  id          String   @id @default(cuid())
+  youtubeId   String   @unique
+  title       String
+  description String   @db.Text
+  thumbnail   String
+  publishedAt DateTime
+  duration    String? // ISO8601 from YouTube contentDetails, null if unknown
+
+  published Boolean @default(true)
+  featured  Boolean @default(false)
+  order     Int     @default(0)
+
+  // set true once an admin edits; sync then stops overwriting title/description/thumbnail
+  locked Boolean @default(false)
+
+  // optional editorial fields — frontend hides any that are empty
+  summary      String?  @db.Text
+  showNotes    String?  @db.Text
+  transcript   String?  @db.Text
+  takeaways    String[] @default([])
+  guestName    String?
+  guestTitle   String?
+  guestCompany String?
+  guestPhoto   String?
+  links        Json     @default("[]") // [{label,url}] — external links
+  spotifyUrl   String?
+  appleUrl     String?
+
+  source    String   @default("youtube") // youtube | manual — ready for other platforms
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, publishedAt])
+  @@index([order])
+}
+
+/// key/value site content: hero, about, contact, seo, sync state.
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model AdminUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String // scrypt: salt:hash
+  createdAt DateTime @default(now())
+}
+
+model ContactMessage {
+  id           String   @id @default(cuid())
+  name         String
+  email        String
+  organization String?
+  subject      String
+  message      String   @db.Text
+  read         Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+}
