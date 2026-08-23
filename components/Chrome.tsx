@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
-import { DoodleShield, DoodleMic, DoodleHeadphones, DoodleSparkles } from "./DoodleIcons";
+import { DoodleShield, DoodleMic, DoodleHeadphones, DoodleSparkles, DoodleYouTube } from "./DoodleIcons";
 
 const LINKS = [
   { href: "/", label: "Home", icon: DoodleMic },
@@ -100,7 +100,7 @@ export function Nav() {
               );
             })}
             <MagneticLink href="https://www.youtube.com/channel/UCVTgPtlFP9KvDbnoFQzHTFg">
-              <DoodleSparkles className="h-3.5 w-3.5 inline mr-1" />
+              <DoodleYouTube className="h-4 w-4 inline mr-1" fill="#FF0000" />
               Watch
             </MagneticLink>
           </nav>
@@ -203,7 +203,10 @@ export function Footer({ youtubeUrl, allianceUrl, email }: { youtubeUrl: string;
 
           <div className="flex flex-col gap-3">
             <span className="kicker mb-1">Elsewhere</span>
-            <a href={youtubeUrl} target="_blank" rel="noreferrer" className="w-fit text-sm text-steel transition-colors hover:text-bone">YouTube Channel ↗</a>
+            <a href={youtubeUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-steel transition-colors hover:text-bone">
+              <DoodleYouTube className="h-4 w-4" fill="#FF0000" />
+              <span>YouTube Channel ↗</span>
+            </a>
             <a href={allianceUrl} target="_blank" rel="noreferrer" className="w-fit text-sm text-steel transition-colors hover:text-bone">Business Security Alliance ↗</a>
             <a href={`mailto:${email}`} className="w-fit text-sm text-steel transition-colors hover:text-bone">{email}</a>
           </div>
