@@ -68,11 +68,18 @@ export function TopicsRail({ topics }: { topics: Topic[] }) {
         })}
       </div>
 
-      <div className="mt-6 h-px w-full bg-steel/12" role="presentation">
-        <div
-          className="h-px bg-signal transition-[width] duration-150 ease-out"
-          style={{ width: `${Math.max(12, progress * 100)}%` }}
-        />
+      <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="h-0.5 w-full sm:flex-1 overflow-hidden rounded-full bg-steel/15" role="presentation">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-signal to-signal-bright transition-[width] duration-200 ease-out"
+            style={{ width: `${Math.max(15, progress * 100)}%` }}
+          />
+        </div>
+        <div className="flex items-center gap-2 font-mono text-[11px] tracking-[0.18em] text-steel-dim uppercase shrink-0">
+          <span className="inline-block animate-pulse text-signal-bright">←</span>
+          <span>Scroll horizontally to explore topics</span>
+          <span className="inline-block animate-pulse text-signal-bright">→</span>
+        </div>
       </div>
     </div>
   );
