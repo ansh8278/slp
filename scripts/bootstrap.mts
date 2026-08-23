@@ -45,7 +45,7 @@ async function main() {
         youtubeId,
         title: tag(e, "title"),
         description: tag(e, "media:description"),
-        thumbnail: `https://i.ytimg.com/vi/${youtubeId}/maxresdefault.jpg`,
+        thumbnail: `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`,
         publishedAt: new Date(tag(e, "published")),
       },
     });

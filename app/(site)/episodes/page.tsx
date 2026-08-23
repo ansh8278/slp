@@ -75,7 +75,7 @@ export default async function EpisodesLibraryPage() {
                 {/* Left Media Thumbnail */}
                 <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-ink-3 shadow-xl group-hover:shadow-signal/20 transition-all duration-500">
                   <Image
-                    src={featuredEpisode.thumbnail || `https://i.ytimg.com/vi/${featuredEpisode.youtubeId}/maxresdefault.jpg`}
+                    src={featuredEpisode.thumbnail.includes("maxresdefault") ? featuredEpisode.thumbnail.replace("maxresdefault", "hqdefault") : (featuredEpisode.thumbnail || `https://i.ytimg.com/vi/${featuredEpisode.youtubeId}/hqdefault.jpg`)}
                     alt={featuredEpisode.title}
                     fill
                     sizes="(max-width: 1024px) 100vw, 55vw"
@@ -184,7 +184,7 @@ export default async function EpisodesLibraryPage() {
                     {/* Thumbnail */}
                     <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-ink-3 mb-4">
                       <Image
-                        src={ep.thumbnail || `https://i.ytimg.com/vi/${ep.youtubeId}/maxresdefault.jpg`}
+                        src={ep.thumbnail.includes("maxresdefault") ? ep.thumbnail.replace("maxresdefault", "hqdefault") : (ep.thumbnail || `https://i.ytimg.com/vi/${ep.youtubeId}/hqdefault.jpg`)}
                         alt={ep.title}
                         fill
                         sizes="(max-width: 768px) 100vw, 33vw"

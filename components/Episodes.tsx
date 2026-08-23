@@ -14,6 +14,12 @@ function byline(ep: { guestName: string | null; guestTitle: string | null; guest
   return detail ? `${ep.guestName} — ${detail}` : ep.guestName;
 }
 
+function cleanThumbnail(url?: string | null): string {
+  if (!url) return "/brand/podcast-art.png";
+  if (url.includes("maxresdefault")) return url.replace("maxresdefault", "hqdefault");
+  return url;
+}
+
 /** Big editorial still for the featured/latest episode. */
 export function FeaturedEpisode({ ep }: { ep: Card }) {
   const play = usePlayer();
@@ -30,7 +36,7 @@ export function FeaturedEpisode({ ep }: { ep: Card }) {
         >
           <div className="relative aspect-video overflow-hidden">
             <Image
-              src={ep.thumbnail}
+              src={cleanThumbnail(ep.thumbnail)}
               alt=""
               fill
               sizes="(max-width: 1024px) 100vw, 55vw"
@@ -143,7 +149,7 @@ export function EpisodeRow({ ep, index }: { ep: Card; index: number }) {
             className="relative hidden aspect-video w-[190px] shrink-0 overflow-hidden rounded-2xl bg-ink-2 transition-[opacity,transform] duration-500 ease-[cubic-bezier(.2,.8,.2,1)] lg:block"
             style={{ opacity: hover ? 1 : 0, transform: hover ? "none" : "translateX(20px) scale(0.94)" }}
           >
-            <Image src={ep.thumbnail} alt="" fill sizes="190px" loading="lazy" className="object-cover" />
+            <Image src={cleanThumbnail(ep.thumbnail)} alt="" fill sizes="190px" loading="lazy" className="object-cover" />
           </span>
           <span
             className="font-mono text-lg transition-transform duration-400"
@@ -172,7 +178,7 @@ export function EpisodeCard({ ep }: { ep: Card }) {
       >
         <span className="relative block aspect-video overflow-hidden bg-ink-3">
           <Image
-            src={ep.thumbnail}
+            src={cleanThumbnail(ep.thumbnail)}
             alt=""
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
