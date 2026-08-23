@@ -70,3 +70,12 @@ model ContactMessage {
 
   @@index([createdAt])
 }
+
+model CustomScript {
+  id            String   @id @default("default")
+  headerCode    String   @default("")
+  footerCode    String   @default("")
+  pageBodyCodes Json     @default("{}")
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
+}

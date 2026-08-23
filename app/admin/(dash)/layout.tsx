@@ -12,6 +12,7 @@ export const metadata: Metadata = { title: "Admin Portal — Security Leader Pod
 const NAV = [
   { href: "/admin", label: "Episodes", icon: "🎙️" },
   { href: "/admin/content", label: "Site Content", icon: "✏️" },
+  { href: "/admin/scripts", label: "Code Injector", icon: "⚡" },
   { href: "/admin/messages", label: "Inbox Messages", icon: "📬" },
 ];
 

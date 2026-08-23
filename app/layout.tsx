@@ -32,10 +32,15 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const viewport: Viewport = { themeColor: "#050507", colorScheme: "dark" };
 
+import { ScriptInjector } from "@/components/ScriptInjector";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${plusJakarta.variable} ${jetbrains.variable} ${pacifico.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <ScriptInjector />
+      </body>
     </html>
   );
 }
