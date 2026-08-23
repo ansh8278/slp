@@ -26,20 +26,30 @@ const publicSelect = {
 
 /** Featured is admin-picked; falls back to the newest published episode. */
 export async function getFeatured(): Promise<PublicEpisode | null> {
-  return (
-    (await prisma.episode.findFirst({ where: { published: true, featured: true }, orderBy: { publishedAt: "desc" }, select: publicSelect })) ??
-    (await prisma.episode.findFirst({ where: { published: true }, orderBy: { publishedAt: "desc" }, select: publicSelect }))
-  );
+  try {
+    return (
+      (await prisma.episode.findFirst({ where: { published: true, featured: true }, orderBy: { publishedAt: "desc" }, select: publicSelect })) ??
+      (await prisma.episode.findFirst({ where: { published: true }, orderBy: { publishedAt: "desc" }, select: publicSelect }))
+    );
+  } catch (e) {
+    console.warn("[getFeatured] Database query failed:", e);
+    return null;
+  }
 }
 
 /** Manual `order` wins (higher first), then newest. */
 export async function getEpisodes(take?: number): Promise<PublicEpisode[]> {
-  return prisma.episode.findMany({
-    where: { published: true },
-    orderBy: [{ order: "desc" }, { publishedAt: "desc" }],
-    ...(take ? { take } : {}),
-    select: publicSelect,
-  });
+  try {
+    return await prisma.episode.findMany({
+      where: { published: true },
+      orderBy: [{ order: "desc" }, { publishedAt: "desc" }],
+      ...(take ? { take } : {}),
+      select: publicSelect,
+    });
+  } catch (e) {
+    console.warn("[getEpisodes] Database query failed:", e);
+    return [];
+  }
 }
 
 export function youtubeUrl(id: string) {

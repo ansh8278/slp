@@ -69,12 +69,16 @@ export type ContentKey = keyof SiteContent;
 
 /** Reads one content group, falling back to the verbatim defaults above. */
 export async function getContent<K extends ContentKey>(key: K): Promise<SiteContent[K]> {
-  const row = await prisma.setting.findUnique({ where: { key } });
-  if (!row) return DEFAULTS[key];
-  // shallow merge so a partially-saved group still renders every field
-  return Array.isArray(DEFAULTS[key])
-    ? ((row.value as SiteContent[K]) ?? DEFAULTS[key])
-    : ({ ...DEFAULTS[key], ...(row.value as object) } as SiteContent[K]);
+  try {
+    const row = await prisma.setting.findUnique({ where: { key } });
+    if (!row) return DEFAULTS[key];
+    return Array.isArray(DEFAULTS[key])
+      ? ((row.value as SiteContent[K]) ?? DEFAULTS[key])
+      : ({ ...DEFAULTS[key], ...(row.value as object) } as SiteContent[K]);
+  } catch (e) {
+    console.warn(`[getContent] Database lookup failed for key "${key}", falling back to DEFAULTS.`, e);
+    return DEFAULTS[key];
+  }
 }
 
 export async function setContent<K extends ContentKey>(key: K, value: SiteContent[K]) {
