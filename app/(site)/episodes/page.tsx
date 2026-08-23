@@ -28,7 +28,7 @@ export default async function EpisodesLibraryPage() {
   });
 
   const featuredEpisode = episodes.find((e) => e.featured) ?? episodes[0];
-  const regularEpisodes = episodes.filter((e) => e.id !== featuredEpisode?.id);
+  const allEpisodesList = episodes;
 
   return (
     <div className="relative min-h-svh pb-24 text-bone">
@@ -172,11 +172,11 @@ export default async function EpisodesLibraryPage() {
       <section className="rule px-[clamp(18px,4vw,56px)] py-12">
         <div className="shell px-0">
           <div className="mb-8 flex items-center justify-between">
-            <span className="kicker">All Episodes ({regularEpisodes.length})</span>
+            <span className="kicker">All Episodes ({allEpisodesList.length})</span>
           </div>
 
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {regularEpisodes.map((ep) => (
+            {allEpisodesList.map((ep) => (
               <Tilt3D key={ep.id} maxTilt={10} scale={1.02}>
                 <article className="group preserve-3d relative flex flex-col justify-between overflow-hidden rounded-3xl border border-steel/15 bg-ink-2/80 p-5 backdrop-blur-sm transition-all duration-500 hover:border-signal/50 hover:shadow-2xl h-full">
                   

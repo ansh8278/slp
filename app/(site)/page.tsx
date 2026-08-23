@@ -34,7 +34,7 @@ export default async function HomePage() {
   ]);
 
   const featured = featuredRaw ? toCard(featuredRaw) : null;
-  const rest = allRaw.filter((e) => e.id !== featuredRaw?.id).map(toCard);
+  const rest = allRaw.map(toCard);
 
   const cdTracks = allRaw.map((ep) => ({
     id: ep.id,
