@@ -37,10 +37,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               </span>
               <div className="flex items-center gap-2">
                 <span className="font-display text-[17px] text-bone font-bold">Admin Portal</span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-signal/20 px-2 py-0.5 font-mono text-[9px] text-signal-bright font-bold">
-                  <span className="h-1.5 w-1.5 rounded-full bg-signal-bright animate-pulse" />
-                  LIVE
-                </span>
               </div>
             </div>
           </Link>
