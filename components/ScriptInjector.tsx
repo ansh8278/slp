@@ -98,8 +98,12 @@ export function ScriptInjector() {
  */
 function parseAndCreateNodes(htmlString: string): Node[] {
   if (!htmlString || !htmlString.trim()) return [];
+
+  // Fix typos like <!--test-> to <!--test--> so comments never corrupt DOM parser
+  const sanitized = htmlString.replace(/<!--([\s\S]*?)(?:->|-->)/g, (_, content) => `<!--${content.trim()}-->`);
+
   const parser = new DOMParser();
-  const doc = parser.parseFromString(htmlString, "text/html");
+  const doc = parser.parseFromString(sanitized, "text/html");
   const nodes: Node[] = [];
 
   const allChildren = [
