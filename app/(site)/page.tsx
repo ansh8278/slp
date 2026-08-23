@@ -11,7 +11,7 @@ import { getContent } from "@/lib/content";
 import { getEpisodes, getFeatured, formatDate, excerpt, SITE_URL, type PublicEpisode } from "@/lib/site";
 import { formatDuration } from "@/lib/video";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const seo = await getContent("seo");

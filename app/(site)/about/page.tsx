@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { getContent } from "@/lib/content";
 import { Tilt3D } from "@/components/Tilt3D";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const about = await getContent("about");

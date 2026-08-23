@@ -8,7 +8,7 @@ import { Tilt3D } from "@/components/Tilt3D";
 import { DoodleMic, DoodleHeadphones, DoodleSparkles, DoodleShield, DoodlePlay } from "@/components/DoodleIcons";
 import { PlayTrigger } from "@/components/PlayTrigger";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Episodes Vault — Security Leader Podcast",
