@@ -93,15 +93,21 @@ export function ScriptInjector() {
 }
 
 /**
- * Safely parses HTML snippet strings into real DOM elements and comment nodes.
+ * Safely parses HTML snippet strings into real DOM elements, scripts, meta, link, and comment nodes.
  * Correctly re-creates executable <script> tags so the browser executes their inline JS or src.
  */
 function parseAndCreateNodes(htmlString: string): Node[] {
+  if (!htmlString || !htmlString.trim()) return [];
   const parser = new DOMParser();
-  const doc = parser.parseFromString(`<body>${htmlString}</body>`, "text/html");
+  const doc = parser.parseFromString(htmlString, "text/html");
   const nodes: Node[] = [];
 
-  Array.from(doc.body.childNodes).forEach((child) => {
+  const allChildren = [
+    ...Array.from(doc.head.childNodes),
+    ...Array.from(doc.body.childNodes),
+  ];
+
+  allChildren.forEach((child) => {
     if (child.nodeType === Node.ELEMENT_NODE) {
       const el = child as HTMLElement;
       if (el.tagName.toLowerCase() === "script") {
@@ -110,11 +116,11 @@ function parseAndCreateNodes(htmlString: string): Node[] {
           scriptEl.setAttribute(attr.name, attr.value);
         });
         scriptEl.textContent = el.textContent;
-        scriptEl.dataset.injectedByCms = "true";
+        scriptEl.setAttribute("data-injected-by-cms", "true");
         nodes.push(scriptEl);
       } else {
         const clone = el.cloneNode(true) as HTMLElement;
-        clone.dataset.injectedByCms = "true";
+        clone.setAttribute("data-injected-by-cms", "true");
         nodes.push(clone);
       }
     } else if (child.nodeType === Node.COMMENT_NODE) {
