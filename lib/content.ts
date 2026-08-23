@@ -60,7 +60,7 @@ export const DEFAULTS = {
     title: "Security Leader Podcast — Where the World's Security Leaders Speak",
     description:
       "Unfiltered industry perspectives from the most influential thought leaders shaping the future of Physical, Electronic, and Cybersecurity. Hosted by the Business Security Alliance.",
-    ogImage: "/brand/podcast-art.png",
+    ogImage: "/brand/podcast-hosts-art.png",
   },
 };
 
