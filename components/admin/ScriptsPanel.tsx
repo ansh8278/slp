@@ -2,66 +2,46 @@
 
 import { useEffect, useState } from "react";
 
-interface PageScriptEntry {
-  path: string;
-  code: string;
-}
+const GTM_HEADER_SNIPPET = `<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-XXXXXXX');</script>
+<!-- End Google Tag Manager -->`;
 
-const TEMPLATES = {
-  ga4: `<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+const GTM_BODY_SNIPPET = `<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->`;
+
+const FOOTER_SNIPPET = `<!-- Custom Analytics / Chat Widget -->
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-XXXXXXXXXX');
-</script>`,
+  console.log("Footer script initialized");
+</script>`;
 
-  metaPixel: `<!-- Meta Pixel Code -->
-<script>
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', 'YOUR_PIXEL_ID');
-fbq('track', 'PageView');
-</script>`,
-
-  hotjar: `<!-- Hotjar Tracking Code -->
-<script>
-    (function(h,o,t,j,a,r){
-        h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
-        h._hjSettings={hjid:YOUR_HOTJAR_ID,hjsv:6};
-        a=o.getElementsByTagName('head')[0];
-        r=o.createElement('script');r.async=1;
-        r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
-        a.appendChild(r);
-    })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
-</script>`,
-
-  customCss: `<style>
-  /* Custom Global Styles */
-  body {
-    /* Custom tweak */
-  }
-</style>`,
-};
+const PAGE_OPTIONS = [
+  { label: "Global / All Pages (default)", key: "global" },
+  { label: "Home Page (/)", key: "/" },
+  { label: "Contact Page (/contact)", key: "/contact" },
+  { label: "Episodes Page (/episodes)", key: "/episodes" },
+  { label: "About Page (/about)", key: "/about" },
+];
 
 export function ScriptsPanel() {
-  const [activeTab, setActiveTab] = useState<"head" | "foot" | "page">("head");
   const [headerCode, setHeaderCode] = useState("");
   const [footerCode, setFooterCode] = useState("");
-  const [pageEntries, setPageEntries] = useState<PageScriptEntry[]>([]);
-  const [newPath, setNewPath] = useState("");
-  const [newCode, setNewCode] = useState("");
+  const [selectedTarget, setSelectedTarget] = useState("global");
+  const [customPath, setCustomPath] = useState("");
+  const [pageBodyCodes, setPageBodyCodes] = useState<Record<string, string>>({
+    global: "<!--test-->\n<!--test2-->\n<!--test3-->\n<!--test4-->",
+  });
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const currentTargetKey = selectedTarget === "custom" ? customPath.trim() || "/custom" : selectedTarget;
 
   useEffect(() => {
     fetch("/api/admin/scripts")
@@ -69,30 +49,17 @@ export function ScriptsPanel() {
       .then((data) => {
         if (data.headerCode) setHeaderCode(data.headerCode);
         if (data.footerCode) setFooterCode(data.footerCode);
-        if (data.pageBodyCodes) {
-          const entries: PageScriptEntry[] = Object.entries(data.pageBodyCodes).map(([path, code]) => ({
-            path,
-            code: String(code),
-          }));
-          setPageEntries(entries);
+        if (data.pageBodyCodes && typeof data.pageBodyCodes === "object") {
+          setPageBodyCodes((prev) => ({ ...prev, ...data.pageBodyCodes }));
         }
       })
-      .catch((err) => {
-        console.error("Failed to load scripts:", err);
-      })
+      .catch((err) => console.error("Failed to fetch scripts:", err))
       .finally(() => setLoading(false));
   }, []);
 
   const handleSave = async () => {
     setSaving(true);
     setMessage(null);
-
-    const pageBodyCodes: Record<string, string> = {};
-    pageEntries.forEach((entry) => {
-      if (entry.path.trim()) {
-        pageBodyCodes[entry.path.trim()] = entry.code;
-      }
-    });
 
     try {
       const res = await fetch("/api/admin/scripts", {
@@ -105,54 +72,43 @@ export function ScriptsPanel() {
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to save settings");
+      if (!res.ok) throw new Error("Failed to save script tags");
 
-      setMessage({ type: "success", text: "✅ Injection settings saved & revalidated successfully!" });
+      setMessage({ type: "success", text: "✅ Script tags saved & reflected live in DOM successfully!" });
     } catch (err: any) {
-      setMessage({ type: "error", text: err.message || "Failed to save script injections." });
+      setMessage({ type: "error", text: err.message || "Failed to save scripts" });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleInsertTemplate = (templateKey: keyof typeof TEMPLATES) => {
-    const code = TEMPLATES[templateKey];
-    if (activeTab === "head") {
-      setHeaderCode((prev) => (prev ? `${prev}\n\n${code}` : code));
-    } else if (activeTab === "foot") {
-      setFooterCode((prev) => (prev ? `${prev}\n\n${code}` : code));
-    } else {
-      setNewCode((prev) => (prev ? `${prev}\n\n${code}` : code));
-    }
-  };
-
-  const handleAddPageEntry = () => {
-    if (!newPath.trim()) return;
-    setPageEntries((prev) => [...prev.filter((e) => e.path !== newPath.trim()), { path: newPath.trim(), code: newCode }]);
-    setNewPath("");
-    setNewCode("");
-  };
-
-  const handleRemovePageEntry = (pathToRemove: string) => {
-    setPageEntries((prev) => prev.filter((e) => e.path !== pathToRemove));
+  const handleBodyCodeChange = (val: string) => {
+    if (!currentTargetKey) return;
+    setPageBodyCodes((prev) => ({
+      ...prev,
+      [currentTargetKey]: val,
+    }));
   };
 
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center font-mono text-sm text-steel-dim">
-        Loading Code Injector Settings...
+        Loading Script Injection Settings...
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Top Banner / Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-steel/15 bg-ink-2 p-6 backdrop-blur-md">
+    <div className="flex flex-col gap-8">
+      {/* Header Section */}
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-steel/15 bg-ink-2 p-6 backdrop-blur-xl shadow-xl">
         <div>
-          <h2 className="display text-2xl text-bone">Code Management System</h2>
-          <p className="text-xs text-steel-dim mt-1">
-            Inject Google Analytics, Meta Pixel, Hotjar, Crisp Chat, or custom JS/CSS dynamically.
+          <span className="font-mono text-xs text-signal-bright uppercase tracking-widest">
+            Global & Page Script Injection
+          </span>
+          <h1 className="display mt-1 text-2xl text-bone">Header, Footer & Body Tags</h1>
+          <p className="mt-1 text-xs leading-relaxed text-steel-dim max-w-2xl">
+            Easily include custom code, GTM tracking, meta tags, and analytics pixels into page headers, footers, or body tags. Changes reflect instantly when inspecting the DOM.
           </p>
         </div>
 
@@ -160,180 +116,167 @@ export function ScriptsPanel() {
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-signal px-6 py-3 font-mono text-xs font-bold tracking-wider text-bone uppercase transition-transform hover:scale-105 disabled:opacity-50"
+          className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-signal px-8 py-3.5 font-mono text-xs font-bold tracking-wider text-bone uppercase transition-all hover:bg-signal-bright hover:scale-105 shadow-lg disabled:opacity-50"
         >
-          {saving ? "Saving..." : "Save Injection Settings"}
+          {saving ? "Saving..." : "Save Script Tags"}
         </button>
       </div>
 
       {message && (
         <div
-          className={`rounded-2xl p-4 font-mono text-xs ${
-            message.type === "success" ? "border border-signal/40 bg-signal/10 text-signal-bright" : "border border-red-500/40 bg-red-500/10 text-red-400"
+          className={`rounded-2xl p-4 font-mono text-xs transition-all ${
+            message.type === "success"
+              ? "border border-signal/40 bg-signal/10 text-signal-bright shadow-md"
+              : "border border-red-500/40 bg-red-500/10 text-red-400"
           }`}
         >
           {message.text}
         </div>
       )}
 
-      {/* Preset Insertions */}
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-steel/12 bg-ink-3/60 p-4">
-        <span className="font-mono text-xs text-steel-dim mr-2">One-Click Presets:</span>
-        <button
-          type="button"
-          onClick={() => handleInsertTemplate("ga4")}
-          className="rounded-full border border-steel/20 bg-ink px-3 py-1 font-mono text-[11px] text-steel hover:text-bone hover:border-signal"
-        >
-          + Google Analytics 4
-        </button>
-        <button
-          type="button"
-          onClick={() => handleInsertTemplate("metaPixel")}
-          className="rounded-full border border-steel/20 bg-ink px-3 py-1 font-mono text-[11px] text-steel hover:text-bone hover:border-signal"
-        >
-          + Meta Pixel
-        </button>
-        <button
-          type="button"
-          onClick={() => handleInsertTemplate("hotjar")}
-          className="rounded-full border border-steel/20 bg-ink px-3 py-1 font-mono text-[11px] text-steel hover:text-bone hover:border-signal"
-        >
-          + Hotjar
-        </button>
-        <button
-          type="button"
-          onClick={() => handleInsertTemplate("customCss")}
-          className="rounded-full border border-steel/20 bg-ink px-3 py-1 font-mono text-[11px] text-steel hover:text-bone hover:border-signal"
-        >
-          + Custom CSS
-        </button>
+      {/* 1. <head> Global Header Code */}
+      <div className="rounded-3xl border border-steel/15 bg-ink-2 p-6 backdrop-blur-md flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-steel/12 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-sm font-bold text-signal-bright">&lt;head&gt;</span>
+              <h3 className="display text-lg text-bone">Global Header Code</h3>
+            </div>
+            <p className="mt-1 text-xs text-steel-dim">
+              These scripts will be printed inside the &lt;head&gt; section across all pages (e.g. Google Tag Manager header, meta tags, CSS links).
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setHeaderCode((prev) => (prev ? `${prev}\n${GTM_HEADER_SNIPPET}` : GTM_HEADER_SNIPPET))}
+            className="rounded-full border border-signal/30 bg-signal/10 px-4 py-1.5 font-mono text-xs text-signal-bright hover:bg-signal/20 transition-all cursor-pointer"
+          >
+            + Add GTM Header Snippet
+          </button>
+        </div>
+
+        <textarea
+          value={headerCode}
+          onChange={(e) => setHeaderCode(e.target.value)}
+          placeholder="<!-- Global <head> scripts (e.g. GTM, Meta Pixel, custom <style>) -->"
+          rows={7}
+          className="w-full rounded-2xl border border-steel/20 bg-ink p-4 font-mono text-xs text-bone focus:border-signal focus:outline-none transition-colors"
+        />
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex border-b border-steel/15">
-        <button
-          type="button"
-          onClick={() => setActiveTab("head")}
-          className={`px-6 py-3 font-mono text-xs font-medium tracking-wider uppercase border-b-2 transition-colors ${
-            activeTab === "head" ? "border-signal text-signal-bright" : "border-transparent text-steel-dim hover:text-bone"
-          }`}
-        >
-          Header Injection (&lt;head&gt;)
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("foot")}
-          className={`px-6 py-3 font-mono text-xs font-medium tracking-wider uppercase border-b-2 transition-colors ${
-            activeTab === "foot" ? "border-signal text-signal-bright" : "border-transparent text-steel-dim hover:text-bone"
-          }`}
-        >
-          Footer Injection (&lt;/body&gt;)
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("page")}
-          className={`px-6 py-3 font-mono text-xs font-medium tracking-wider uppercase border-b-2 transition-colors ${
-            activeTab === "page" ? "border-signal text-signal-bright" : "border-transparent text-steel-dim hover:text-bone"
-          }`}
-        >
-          Page-Specific Body Injection ({pageEntries.length})
-        </button>
-      </div>
-
-      {/* Tab 1: Header Injection */}
-      {activeTab === "head" && (
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between font-mono text-xs text-steel-dim">
-            <span>Injected directly inside &lt;head&gt; tags globally</span>
-            <span>Length: {headerCode.length} chars</span>
+      {/* 2. <body> Page-Specific Body Code */}
+      <div className="rounded-3xl border border-steel/15 bg-ink-2 p-6 backdrop-blur-md flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-steel/12 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-sm font-bold text-signal-bright">&lt;body&gt;</span>
+              <h3 className="display text-lg text-bone">Page-Specific Body Code</h3>
+            </div>
+            <p className="mt-1 text-xs text-steel-dim">
+              Select a page to include different body tags (e.g. GTM noscript iframe, conversion pixels). Header and footer tags remain global across all pages.
+            </p>
           </div>
-          <textarea
-            value={headerCode}
-            onChange={(e) => setHeaderCode(e.target.value)}
-            placeholder="<!-- Insert GTM, Meta Pixel, or <style> tags here -->"
-            rows={12}
-            className="w-full rounded-2xl border border-steel/20 bg-ink p-4 font-mono text-xs text-bone focus:border-signal focus:outline-none"
-          />
-        </div>
-      )}
 
-      {/* Tab 2: Footer Injection */}
-      {activeTab === "foot" && (
+          <button
+            type="button"
+            onClick={() => handleBodyCodeChange((pageBodyCodes[currentTargetKey] || "") + `\n${GTM_BODY_SNIPPET}`)}
+            className="rounded-full border border-signal/30 bg-signal/10 px-4 py-1.5 font-mono text-xs text-signal-bright hover:bg-signal/20 transition-all cursor-pointer"
+          >
+            + Add GTM Body Snippet
+          </button>
+        </div>
+
+        {/* Target Page Selector */}
         <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between font-mono text-xs text-steel-dim">
-            <span>Injected right before &lt;/body&gt; closing tag globally</span>
-            <span>Length: {footerCode.length} chars</span>
+          <label className="font-mono text-xs font-bold text-bone uppercase">Target Page Selection:</label>
+          <div className="flex flex-wrap gap-2">
+            {PAGE_OPTIONS.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setSelectedTarget(opt.key)}
+                className={`rounded-xl px-4 py-2 font-mono text-xs transition-all cursor-pointer ${
+                  selectedTarget === opt.key
+                    ? "bg-signal text-bone font-bold shadow-md"
+                    : "border border-steel/20 bg-ink text-steel hover:text-bone"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setSelectedTarget("custom")}
+              className={`rounded-xl px-4 py-2 font-mono text-xs transition-all cursor-pointer ${
+                selectedTarget === "custom"
+                  ? "bg-signal text-bone font-bold shadow-md"
+                  : "border border-steel/20 bg-ink text-steel hover:text-bone"
+              }`}
+            >
+              + Custom Path...
+            </button>
           </div>
-          <textarea
-            value={footerCode}
-            onChange={(e) => setFooterCode(e.target.value)}
-            placeholder="<!-- Insert Crisp, Intercom, or custom JS scripts here -->"
-            rows={12}
-            className="w-full rounded-2xl border border-steel/20 bg-ink p-4 font-mono text-xs text-bone focus:border-signal focus:outline-none"
-          />
-        </div>
-      )}
 
-      {/* Tab 3: Page-Specific Injection */}
-      {activeTab === "page" && (
-        <div className="flex flex-col gap-6">
-          {/* New Path Add Box */}
-          <div className="rounded-2xl border border-steel/15 bg-ink-2 p-5 flex flex-col gap-4">
-            <h4 className="font-mono text-xs font-bold text-bone uppercase">Add Page-Specific Target</h4>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          {selectedTarget === "custom" && (
+            <div className="mt-2 flex items-center gap-2">
               <input
                 type="text"
-                value={newPath}
-                onChange={(e) => setNewPath(e.target.value)}
-                placeholder="/contact or /episodes"
-                className="rounded-xl border border-steel/20 bg-ink px-4 py-2.5 font-mono text-xs text-bone focus:border-signal focus:outline-none sm:w-64"
+                value={customPath}
+                onChange={(e) => setCustomPath(e.target.value)}
+                placeholder="/checkout or /pricing"
+                className="rounded-xl border border-steel/20 bg-ink px-4 py-2 font-mono text-xs text-bone focus:border-signal focus:outline-none w-64"
               />
-              <button
-                type="button"
-                onClick={handleAddPageEntry}
-                className="rounded-xl bg-steel/20 px-5 py-2.5 font-mono text-xs text-bone hover:bg-signal"
-              >
-                + Save Path Script
-              </button>
-            </div>
-            <textarea
-              value={newCode}
-              onChange={(e) => setNewCode(e.target.value)}
-              placeholder="<script>/* Code specifically for this path */</script>"
-              rows={4}
-              className="w-full rounded-xl border border-steel/20 bg-ink p-3 font-mono text-xs text-bone focus:border-signal focus:outline-none"
-            />
-          </div>
-
-          {/* Existing Page Targets Table */}
-          {pageEntries.length > 0 ? (
-            <div className="flex flex-col gap-4">
-              <h4 className="font-mono text-xs text-steel-dim uppercase">Configured Page Targets</h4>
-              {pageEntries.map((entry) => (
-                <div key={entry.path} className="rounded-2xl border border-steel/15 bg-ink p-4 flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-bold text-signal-bright">{entry.path}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemovePageEntry(entry.path)}
-                      className="font-mono text-xs text-red-400 hover:underline"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                  <pre className="max-h-32 overflow-y-auto rounded-xl bg-ink-2 p-3 font-mono text-[11px] text-steel-dim">
-                    {entry.code}
-                  </pre>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-steel/20 p-8 text-center font-mono text-xs text-steel-dim">
-              No page-specific script targets configured yet. Add path "/contact" above.
+              <span className="font-mono text-xs text-steel-dim">Enter path starting with /</span>
             </div>
           )}
         </div>
-      )}
+
+        {/* Textarea for target page body code */}
+        <div className="flex flex-col gap-2 mt-2">
+          <span className="font-mono text-xs text-steel-dim">
+            Body Code for <strong className="text-signal-bright">[{currentTargetKey}]</strong> (Printed just below opening &lt;body&gt; tag):
+          </span>
+          <textarea
+            value={pageBodyCodes[currentTargetKey] || ""}
+            onChange={(e) => handleBodyCodeChange(e.target.value)}
+            placeholder={`<!-- Body code for ${currentTargetKey} (e.g. GTM noscript, pixels) -->`}
+            rows={7}
+            className="w-full rounded-2xl border border-steel/20 bg-ink p-4 font-mono text-xs text-bone focus:border-signal focus:outline-none transition-colors"
+          />
+        </div>
+      </div>
+
+      {/* 3. </body> Global Footer Code */}
+      <div className="rounded-3xl border border-steel/15 bg-ink-2 p-6 backdrop-blur-md flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-steel/12 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-sm font-bold text-signal-bright">&lt;/body&gt;</span>
+              <h3 className="display text-lg text-bone">Global Footer Code</h3>
+            </div>
+            <p className="mt-1 text-xs text-steel-dim">
+              These scripts will be printed right before the closing &lt;/body&gt; tag across all pages (e.g. chat widgets, analytics trackers, custom event listeners).
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setFooterCode((prev) => (prev ? `${prev}\n${FOOTER_SNIPPET}` : FOOTER_SNIPPET))}
+            className="rounded-full border border-signal/30 bg-signal/10 px-4 py-1.5 font-mono text-xs text-signal-bright hover:bg-signal/20 transition-all cursor-pointer"
+          >
+            + Add Footer Snippet
+          </button>
+        </div>
+
+        <textarea
+          value={footerCode}
+          onChange={(e) => setFooterCode(e.target.value)}
+          placeholder="<!-- Global footer scripts (e.g. Crisp, Intercom, analytics) -->"
+          rows={7}
+          className="w-full rounded-2xl border border-steel/20 bg-ink p-4 font-mono text-xs text-bone focus:border-signal focus:outline-none transition-colors"
+        />
+      </div>
     </div>
   );
 }

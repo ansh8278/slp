@@ -11,7 +11,7 @@ interface CustomScriptData {
 
 export function ScriptInjector() {
   const pathname = usePathname();
-  const injectedNodesRef = useRef<HTMLElement[]>([]);
+  const injectedNodesRef = useRef<Node[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -49,13 +49,24 @@ export function ScriptInjector() {
           });
         }
 
-        // 3. Inject Page-Specific Code into <body>
+        // 3. Inject Page-Specific Body Code into <body> (check global or path match)
         if (data.pageBodyCodes && typeof data.pageBodyCodes === "object") {
+          // Check for global / all pages body code or pathname specific code
+          const globalCode = data.pageBodyCodes["global"] || data.pageBodyCodes["/"];
           const currentPathCode = data.pageBodyCodes[pathname];
-          if (currentPathCode && currentPathCode.trim()) {
-            const pageNodes = parseAndCreateNodes(currentPathCode);
+
+          const combinedCode = [globalCode, currentPathCode !== globalCode ? currentPathCode : null]
+            .filter(Boolean)
+            .join("\n");
+
+          if (combinedCode.trim()) {
+            const pageNodes = parseAndCreateNodes(combinedCode);
             pageNodes.forEach((node) => {
-              document.body.appendChild(node);
+              if (document.body.firstChild) {
+                document.body.insertBefore(node, document.body.firstChild);
+              } else {
+                document.body.appendChild(node);
+              }
               injectedNodesRef.current.push(node);
             });
           }
@@ -82,13 +93,13 @@ export function ScriptInjector() {
 }
 
 /**
- * Safely parses HTML snippet strings into real DOM elements.
+ * Safely parses HTML snippet strings into real DOM elements and comment nodes.
  * Correctly re-creates executable <script> tags so the browser executes their inline JS or src.
  */
-function parseAndCreateNodes(htmlString: string): HTMLElement[] {
+function parseAndCreateNodes(htmlString: string): Node[] {
   const parser = new DOMParser();
   const doc = parser.parseFromString(`<body>${htmlString}</body>`, "text/html");
-  const nodes: HTMLElement[] = [];
+  const nodes: Node[] = [];
 
   Array.from(doc.body.childNodes).forEach((child) => {
     if (child.nodeType === Node.ELEMENT_NODE) {
@@ -106,6 +117,9 @@ function parseAndCreateNodes(htmlString: string): HTMLElement[] {
         clone.dataset.injectedByCms = "true";
         nodes.push(clone);
       }
+    } else if (child.nodeType === Node.COMMENT_NODE) {
+      const commentEl = document.createComment(child.nodeValue || "");
+      nodes.push(commentEl);
     }
   });
 
