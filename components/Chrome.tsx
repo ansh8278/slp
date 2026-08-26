@@ -125,7 +125,7 @@ export function Nav() {
             animate={{ clipPath: "inset(0 0 0% 0)" }}
             exit={{ clipPath: "inset(0 0 100% 0)" }}
             transition={{ duration: reduce ? 0 : 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-0 z-70 flex flex-col justify-center bg-ink px-8 md:hidden"
+            className="fixed inset-0 z-70 flex flex-col justify-center-safe overflow-y-auto bg-ink px-8 py-24 md:hidden"
           >
             <nav aria-label="Mobile" className="flex flex-col gap-2">
               {LINKS.map((l, i) => (
@@ -135,7 +135,7 @@ export function Nav() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: reduce ? 0 : 0.18 + i * 0.07, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  <Link href={l.href} className="display block py-3 text-[13vw] text-bone">{l.label}</Link>
+                  <Link href={l.href} className="display block py-3 text-[min(13vw,9vh)] text-bone">{l.label}</Link>
                 </motion.div>
               ))}
             </nav>

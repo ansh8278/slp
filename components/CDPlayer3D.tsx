@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { usePlayer } from "./Player";
 import { Tilt3D } from "./Tilt3D";
@@ -68,6 +68,40 @@ function formatSeconds(totalSeconds: number): string {
   return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
+type YTPlayer = {
+  playVideo: () => void;
+  pauseVideo: () => void;
+  loadVideoById: (id: string) => void;
+  cueVideoById: (id: string) => void;
+  seekTo: (seconds: number, allowSeekAhead: boolean) => void;
+  getCurrentTime: () => number;
+  getDuration: () => number;
+  destroy: () => void;
+};
+
+declare global {
+  interface Window {
+    YT?: { Player: new (el: HTMLElement, opts: object) => YTPlayer; PlayerState: Record<string, number> };
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
+/** Loads the YouTube IFrame API once per page and resolves when it is ready. */
+let ytApi: Promise<Window["YT"]> | null = null;
+function loadYouTubeApi() {
+  if (window.YT?.Player) return Promise.resolve(window.YT);
+  if (!ytApi) {
+    ytApi = new Promise((resolve) => {
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => { prev?.(); resolve(window.YT); };
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      document.head.appendChild(tag);
+    });
+  }
+  return ytApi;
+}
+
 export function CDPlayer3D({ initialTracks }: { initialTracks?: CDTrack[] }) {
   const openGlobalPlayer = usePlayer();
   const [tracks] = useState<CDTrack[]>(
@@ -75,29 +109,98 @@ export function CDPlayer3D({ initialTracks }: { initialTracks?: CDTrack[] }) {
   );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  const hostRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<YTPlayer | null>(null);
+  const playingRef = useRef(false);
+  playingRef.current = isPlaying;
 
   const currentTrack = tracks[currentIndex] || DEFAULT_TRACKS[0];
   const thumbSrc = currentTrack.thumbnail || "/brand/podcast-art.png";
 
-  const totalDurationSec = parseDurationToSeconds(currentTrack.duration);
-  const elapsedSec = Math.floor((progress / 100) * totalDurationSec);
-  const formattedElapsed = formatSeconds(elapsedSec);
+  // Until the player reports a real duration, fall back to the value synced from YouTube.
+  const totalDurationSec = duration || parseDurationToSeconds(currentTrack.duration);
+  const progress = totalDurationSec ? Math.min(100, (elapsed / totalDurationSec) * 100) : 0;
+  const formattedElapsed = formatSeconds(Math.floor(elapsed));
   const formattedTotal = formatSeconds(totalDurationSec);
 
+  const trackIdRef = useRef(currentTrack.youtubeId);
+  const nextRef = useRef<() => void>(() => {});
+
+  // Build the player once; the disc's opaque well sits on top of it.
+  useEffect(() => {
+    let cancelled = false;
+    const host = hostRef.current;
+    if (!host) return;
+
+    loadYouTubeApi().then((YT) => {
+      if (cancelled || !YT || !hostRef.current) return;
+      const mount = document.createElement("div");
+      hostRef.current.appendChild(mount);
+      playerRef.current = new YT.Player(mount, {
+        videoId: trackIdRef.current,
+        playerVars: { controls: 0, disablekb: 1, modestbranding: 1, rel: 0, playsinline: 1 },
+        events: {
+          onReady: () => setDuration(playerRef.current?.getDuration() || 0),
+          onStateChange: (e: { data: number }) => {
+            const S = YT.PlayerState;
+            // Buffering counts as playing: YouTube sits in BUFFERING for a beat
+            // after playVideo(), and treating that as "paused" made the deck look
+            // dead right after the user pressed play.
+            setIsPlaying(e.data === S.PLAYING || e.data === S.BUFFERING);
+            setDuration(playerRef.current?.getDuration() || 0);
+            if (e.data === S.ENDED) nextRef.current();
+          },
+          // A blocked/removed video must not leave the deck claiming it is playing.
+          onError: () => setIsPlaying(false),
+        },
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      playerRef.current?.destroy();
+      playerRef.current = null;
+    };
+  }, []);
+
+  // Swap the loaded video when the track changes, preserving play/pause intent.
+  useEffect(() => {
+    if (currentTrack.youtubeId === trackIdRef.current) return;
+    trackIdRef.current = currentTrack.youtubeId;
+    setElapsed(0);
+    setDuration(0);
+    const p = playerRef.current;
+    if (!p) return;
+    if (playingRef.current) p.loadVideoById(currentTrack.youtubeId);
+    else p.cueVideoById(currentTrack.youtubeId);
+  }, [currentTrack.youtubeId]);
+
+  // Drive the progress bar from real playback position, not a timer.
   useEffect(() => {
     if (!isPlaying) return;
     const interval = setInterval(() => {
-      setProgress((prev) => (prev >= 100 ? 0 : prev + 0.1));
+      const p = playerRef.current;
+      if (!p) return;
+      setElapsed(p.getCurrentTime() || 0);
+      const d = p.getDuration() || 0;
+      if (d) setDuration(d);
     }, 500);
     return () => clearInterval(interval);
   }, [isPlaying]);
 
+  // playVideo() must run synchronously inside the click for iOS to allow sound.
   const togglePlay = () => {
-    setIsPlaying((prev) => !prev);
+    const p = playerRef.current;
+    if (!p) return;
+    if (playingRef.current) p.pauseVideo();
+    else p.playVideo();
   };
 
   const handleWatchVideo = () => {
+    playerRef.current?.pauseVideo();
     openGlobalPlayer({
       youtubeId: currentTrack.youtubeId,
       title: currentTrack.title,
@@ -105,14 +208,13 @@ export function CDPlayer3D({ initialTracks }: { initialTracks?: CDTrack[] }) {
     });
   };
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % tracks.length);
-    setProgress(0);
-  };
+  }, [tracks.length]);
+  nextRef.current = handleNext;
 
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev - 1 + tracks.length) % tracks.length);
-    setProgress(0);
   };
 
   return (
@@ -146,7 +248,19 @@ export function CDPlayer3D({ initialTracks }: { initialTracks?: CDTrack[] }) {
 
             {/* Left: 3D Holographic CD Turntable Stage */}
             <div className="relative mx-auto flex h-[240px] w-[240px] sm:h-[280px] sm:w-[280px] shrink-0 items-center justify-center z-20">
-              
+
+              {/*
+                The real YouTube player. It has to be a genuinely laid-out, full-size
+                element — browsers refuse to play media in a 0x0 or clipped iframe,
+                which is why the old hidden `sr-only` embed never produced sound.
+                The opaque well below paints over it.
+              */}
+              <div
+                ref={hostRef}
+                aria-hidden
+                className="pointer-events-none absolute inset-1 overflow-hidden rounded-full [&_iframe]:h-full [&_iframe]:w-full"
+              />
+
               {/* Recessed Well */}
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-ink-3 via-navy to-ink border border-steel/20 shadow-inner" />
 
@@ -221,16 +335,6 @@ export function CDPlayer3D({ initialTracks }: { initialTracks?: CDTrack[] }) {
                   </button>
                 </div>
 
-                {/* Direct Hidden Audio Stream */}
-                {isPlaying && (
-                  <iframe
-                    src={`https://www.youtube-nocookie.com/embed/${currentTrack.youtubeId}?autoplay=1&enablejsapi=1`}
-                    allow="autoplay"
-                    className="sr-only h-0 w-0 pointer-events-none opacity-0"
-                    title="CD Audio Stream"
-                  />
-                )}
-
                 <h3 className="display mt-2.5 text-[clamp(20px,2.2vw,30px)] leading-snug text-bone line-clamp-2">
                   {currentTrack.title}
                 </h3>
@@ -244,9 +348,12 @@ export function CDPlayer3D({ initialTracks }: { initialTracks?: CDTrack[] }) {
                 <div
                   className="relative h-2 w-full cursor-pointer overflow-hidden rounded-full bg-ink-3 ring-1 ring-steel/15"
                   onClick={(e) => {
+                    if (!totalDurationSec) return;
                     const rect = e.currentTarget.getBoundingClientRect();
-                    const clickPct = ((e.clientX - rect.left) / rect.width) * 100;
-                    setProgress(clickPct);
+                    const pct = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+                    const seconds = pct * totalDurationSec;
+                    playerRef.current?.seekTo(seconds, true);
+                    setElapsed(seconds);
                   }}
                 >
                   <div
@@ -314,9 +421,8 @@ export function CDPlayer3D({ initialTracks }: { initialTracks?: CDTrack[] }) {
                       type="button"
                       onClick={() => {
                         setCurrentIndex(idx);
-                        setProgress(0);
                       }}
-                      className={`h-2.5 rounded-full transition-all duration-300 ${
+                      className={`relative h-2.5 rounded-full transition-all duration-300 before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[""] ${
                         idx === currentIndex ? "bg-signal-bright w-8" : "bg-steel/25 hover:bg-steel/50 w-5"
                       }`}
                       aria-label={`Select Track ${idx + 1}`}

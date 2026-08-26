@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Phones on the LAN hit the dev server by IP; without this Next blocks the
+  // dev JS chunks cross-origin and the page renders with no JS at all.
+  allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "172.16.*.*"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "i.ytimg.com" },

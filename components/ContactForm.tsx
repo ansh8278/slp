@@ -6,7 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { submitContact, type ContactState } from "@/app/(site)/contact/actions";
 
 const FIELD =
-  "w-full rounded-xl border bg-ink-2/70 px-4 py-3.5 text-[15px] text-bone outline-none transition-colors duration-300 placeholder:text-steel-dim/55 focus:border-signal";
+  "w-full rounded-xl border bg-ink-2/70 px-4 py-3.5 text-base sm:text-[15px] text-bone outline-none transition-colors duration-300 placeholder:text-steel-dim/55 focus:border-signal";
 
 function Field({
   label, name, type = "text", required, error, ...rest

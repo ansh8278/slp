@@ -30,7 +30,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           {/* Logo & Portal Identity */}
           <Link href="/admin" className="flex items-center gap-3 group">
             <div className="relative h-9 w-9 overflow-hidden rounded-xl border border-steel/20 bg-ink-3 p-1.5 shadow-md transition-transform duration-300 group-hover:scale-105">
-              <Image src="/brand/logo.png" alt="Logo" fill className="object-contain p-1" />
+              <Image src="/brand/logo.png" alt="Logo" fill sizes="36px" className="object-contain p-1" />
             </div>
             <div>
               <span className="block font-mono text-[9.5px] tracking-[0.25em] text-steel-dim uppercase">
@@ -43,7 +43,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </Link>
 
           {/* Navigation Links */}
-          <nav className="flex items-center gap-2 ml-4">
+          <nav className="flex flex-wrap items-center gap-2 sm:ml-4">
             {NAV.map((n) => (
               <Link
                 key={n.href}
@@ -62,7 +62,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </nav>
 
           {/* Right Action Tools */}
-          <div className="ml-auto flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:ml-auto sm:gap-4">
             <Link
               href="/"
               target="_blank"

@@ -36,7 +36,7 @@ export default async function LoginPage() {
             {/* Top Brand Identity */}
             <div className="flex items-center gap-4">
               <div className="relative h-14 w-14 overflow-hidden rounded-2xl border border-steel/25 bg-ink-3 p-2.5 shadow-xl">
-                <Image src="/brand/logo.png" alt="Logo" fill className="object-contain p-1" priority />
+                <Image src="/brand/logo.png" alt="Logo" fill sizes="44px" className="object-contain p-1" priority />
               </div>
               <div>
                 <span className="block font-mono text-[10px] tracking-[0.3em] text-steel-dim uppercase">
@@ -64,6 +64,7 @@ export default async function LoginPage() {
                     src="/brand/logo.png"
                     alt="Security Leader Podcast Medallion"
                     fill
+                    sizes="240px"
                     priority
                     className="object-contain"
                   />

@@ -51,7 +51,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: reduce ? 0 : 18, scale: reduce ? 1 : 0.98 }}
               transition={{ duration: reduce ? 0 : 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full max-w-5xl"
+              className="w-full max-w-[min(64rem,calc((100svh-11rem)*16/9))]"
             >
               <div className="mb-4 flex items-start justify-between gap-6">
                 <div className="min-w-0">

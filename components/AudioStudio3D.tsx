@@ -32,7 +32,7 @@ export function AudioStudio3D() {
   };
 
   return (
-    <section className="rule relative py-[clamp(60px,9vh,120px)] px-[clamp(18px,4vw,56px)] bg-gradient-to-b from-ink via-ink-2 to-ink">
+    <section className="rule relative overflow-x-clip py-[clamp(60px,9vh,120px)] px-[clamp(18px,4vw,56px)] bg-gradient-to-b from-ink via-ink-2 to-ink">
       <div className="shell relative flex flex-col items-center justify-center text-center px-0">
         
         {/* Section Header */}
@@ -51,31 +51,35 @@ export function AudioStudio3D() {
         </div>
 
         {/* 3D Floating Stage Container */}
-        <div className="relative flex w-full max-w-5xl items-center justify-center min-h-[520px] sm:min-h-[600px] perspective-1000 my-2 pb-6">
+        <div className="relative flex w-full max-w-5xl flex-col items-center justify-center sm:min-h-[600px] perspective-1000 my-2 pb-6">
           
           {/* Background Dark Glowing Aura Blob */}
           <div
             aria-hidden
-            className="absolute h-[360px] w-[360px] sm:h-[500px] sm:w-[500px] rounded-full ring-1 ring-steel/15 shadow-2xl animate-pulse-3d opacity-90"
+            className="absolute aspect-square w-[85vw] max-w-[360px] sm:max-w-[500px] rounded-full ring-1 ring-steel/15 shadow-2xl animate-pulse-3d opacity-90"
             style={{
               background: "radial-gradient(circle at 50% 50%, rgba(31,121,192,0.30) 0%, rgba(12,24,38,0.85) 60%, transparent 80%)",
             }}
           />
 
           {/* Central 3D Cartoon Listener / Host Character */}
-          <div className="relative z-10 h-[400px] w-[340px] sm:h-[520px] sm:w-[440px] flex items-center justify-center drop-shadow-[0_20px_30px_rgba(0,0,0,0.8)]">
+          <div className="relative z-10 h-[320px] w-full max-w-[300px] sm:h-[520px] sm:w-[440px] sm:max-w-none flex items-center justify-center drop-shadow-[0_20px_30px_rgba(0,0,0,0.8)]">
             <Image
               src="/brand/cartoon-listener-perfect.png"
               alt="Security Leader Podcast Cartoon Listener"
               fill
-              sizes="(max-width: 640px) 340px, 440px"
+              sizes="(max-width: 640px) 300px, 440px"
               priority
               className="object-contain transition-transform duration-700 hover:scale-105"
             />
           </div>
 
+          {/* Phones stack the four badges below the character; from sm up `contents`
+              dissolves this wrapper so they float over the stage again. */}
+          <div className="mt-6 flex w-full flex-wrap items-center justify-center gap-3 sm:contents">
+
           {/* Floating Recording Card Widget (Top Left) */}
-          <div className="absolute top-[2%] left-[0%] sm:left-[5%] z-30">
+          <div className="z-30 sm:absolute sm:top-[2%] sm:left-[5%]">
             <Tilt3D maxTilt={12} scale={1.04}>
               <div className="preserve-3d flex flex-col gap-3 rounded-2xl border border-steel/20 bg-bone p-4 sm:p-5 text-ink shadow-[0_25px_45px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-all duration-500">
                 <div className="flex items-center justify-between gap-4 translate-z-20">
@@ -125,11 +129,11 @@ export function AudioStudio3D() {
           </div>
 
           {/* Floating Guest Avatar Badge 1 (Top Right) */}
-          <div className="absolute top-[6%] right-[0%] sm:right-[6%] z-20 animate-float-3d">
+          <div className="z-20 animate-float-3d sm:absolute sm:top-[6%] sm:right-[6%]">
             <Tilt3D maxTilt={15} scale={1.08}>
               <div className="flex items-center gap-2.5 rounded-full border border-steel/25 bg-ink-2/95 px-3.5 py-2 shadow-xl backdrop-blur-md">
                 <div className="relative h-9 w-9 overflow-hidden rounded-full ring-2 ring-signal">
-                  <Image src="/brand/cartoon-guest-1.png" alt="CISO Guest" fill className="object-cover" />
+                  <Image src="/brand/cartoon-guest-1.png" alt="CISO Guest" fill sizes="36px" className="object-cover" />
                 </div>
                 <div className="text-left pr-1">
                   <p className="font-mono text-[10px] uppercase font-bold text-bone">CISO Leader</p>
@@ -140,7 +144,7 @@ export function AudioStudio3D() {
           </div>
 
           {/* Floating Guest Avatar Badge 2 (Bottom Left) */}
-          <div className="absolute bottom-[8%] left-[0%] sm:left-[8%] z-20 animate-float-3d" style={{ animationDelay: "-4s" }}>
+          <div className="z-20 animate-float-3d sm:absolute sm:bottom-[8%] sm:left-[8%]" style={{ animationDelay: "-4s" }}>
             <Tilt3D maxTilt={15} scale={1.08}>
               <div className="flex items-center gap-2.5 rounded-full border border-steel/20 bg-ink-3/95 px-4 py-2 shadow-xl backdrop-blur-md">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-signal/20 text-xs text-signal-bright font-bold">
@@ -152,7 +156,7 @@ export function AudioStudio3D() {
           </div>
 
           {/* Floating Stats Card Badge (Bottom Right) */}
-          <div className="absolute bottom-[4%] right-[0%] sm:right-[5%] z-30">
+          <div className="z-30 sm:absolute sm:bottom-[4%] sm:right-[5%]">
             <Tilt3D maxTilt={12} scale={1.05}>
               <div className="preserve-3d flex items-center gap-3.5 rounded-2xl border border-steel/20 bg-bone p-3.5 sm:p-4 text-ink shadow-[0_25px_40px_rgba(0,0,0,0.45)] backdrop-blur-xl">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#82c91e] font-mono text-sm font-bold text-ink translate-z-20">
@@ -164,6 +168,8 @@ export function AudioStudio3D() {
                 </div>
               </div>
             </Tilt3D>
+          </div>
+
           </div>
 
         </div>

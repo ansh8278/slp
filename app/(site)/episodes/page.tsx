@@ -31,7 +31,7 @@ export default async function EpisodesLibraryPage() {
   const allEpisodesList = episodes;
 
   return (
-    <div className="relative min-h-svh pb-24 text-bone">
+    <div className="relative min-h-svh overflow-x-clip pb-24 text-bone">
       
       {/* Masthead Header */}
       <section className="relative grid min-h-[50svh] content-end overflow-hidden px-[clamp(18px,4vw,56px)] pt-[clamp(130px,20vh,220px)] pb-[clamp(40px,7vh,80px)]">

@@ -86,29 +86,31 @@
   .hairline-b { border-bottom: 1px solid color-mix(in srgb, var(--color-steel) 14%, transparent); }
 
   /* 70s Funky Script Typography style matching reference screenshot */
+  /* Offsets are in em so the drop-stack stays proportional: fixed px read as a
+     heavy smear at mobile heading sizes and bled into the neighbouring word. */
   .funky-text {
     font-family: var(--font-pacifico), cursive, sans-serif;
     display: inline-block;
     color: #ffffff !important;
-    text-shadow: 
-      2.5px 2.5px 0px #050507,
-      5px 5px 0px #1f79c0,
-      8px 8px 0px #3e9be6,
-      12px 12px 22px rgba(0, 0, 0, 0.85);
-    -webkit-text-stroke: 1.5px #050507;
+    text-shadow:
+      0.039em 0.039em 0px #050507,
+      0.078em 0.078em 0px #1f79c0,
+      0.125em 0.125em 0px #3e9be6,
+      0.188em 0.188em 0.34em rgba(0, 0, 0, 0.85);
+    -webkit-text-stroke: 0.023em #050507;
     letter-spacing: 0.02em;
-    padding-inline: 0.12em;
+    padding-inline: 0.2em;
   }
 
   .funky-highlight {
     font-family: var(--font-pacifico), cursive, sans-serif;
     display: inline-block;
     color: #3e9be6;
-    text-shadow: 
-      3px 3px 0px #050507,
-      5px 5px 0px #edf1f5;
-    -webkit-text-stroke: 1.2px #050507;
-    padding-inline: 0.12em;
+    text-shadow:
+      0.047em 0.047em 0px #050507,
+      0.078em 0.078em 0px #edf1f5;
+    -webkit-text-stroke: 0.019em #050507;
+    padding-inline: 0.2em;
   }
 
   /* ---- motion ---- */
@@ -130,6 +132,16 @@
   @keyframes slp-bar { 0%, 100% { transform: scaleY(0.2); } 50% { transform: scaleY(1); } }
   @keyframes slp-sweep { from { transform: translateX(-120%); } to { transform: translateX(220%); } }
   @keyframes slp-spin { to { transform: rotate(360deg); } }
+
+  /*
+   * Above-the-fold entrance. Deliberately plain time-based CSS, not JS: the hero
+   * used to be animated in by motion/react, whose SSR'd `initial` state ships as
+   * inline opacity:0 — so any browser that failed to run the JS showed a blank
+   * hero. CSS keeps the content visible on its own. The reduced-motion block at
+   * the bottom of this file collapses these to their end state.
+   */
+  .hero-rise { animation: slp-rise 0.95s var(--ease-out-expo) both; }
+  .hero-mask { animation: slp-mask-up 1.15s var(--ease-out-expo) both; }
 
   /*
    * Scroll reveals use native scroll-driven animations (animation-timeline: view()).

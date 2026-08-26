@@ -26,7 +26,7 @@ export default async function EpisodeDetailPage({ params }: { params: Promise<{ 
   if (!ep || !ep.published) notFound();
 
   return (
-    <div className="relative min-h-svh pb-24 text-bone">
+    <div className="relative min-h-svh overflow-x-clip pb-24 text-bone">
       
       {/* Ambient Radial Background Glow */}
       <div

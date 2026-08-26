@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 import type { ActionState } from "@/app/admin/actions";
 
 export const inputCls =
-  "w-full rounded-2xl border-2 border-steel/40 bg-ink-2/90 px-4 py-3.5 text-[15px] font-medium text-bone outline-none transition-all duration-300 focus:border-signal-bright focus:bg-ink focus:ring-4 focus:ring-signal/30 placeholder:text-steel-dim/60 shadow-lg";
+  "w-full rounded-2xl border-2 border-steel/40 bg-ink-2/90 px-4 py-3.5 text-base sm:text-[15px] font-medium text-bone outline-none transition-all duration-300 focus:border-signal-bright focus:bg-ink focus:ring-4 focus:ring-signal/30 placeholder:text-steel-dim/60 shadow-lg";
 
 export function Label({ children, hint }: { children: React.ReactNode; hint?: string }) {
   return (
