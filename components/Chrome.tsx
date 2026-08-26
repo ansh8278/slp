@@ -70,9 +70,9 @@ export function Nav() {
               priority
               className="h-9 w-9 transition-transform duration-500 group-hover:scale-110 sm:h-10 sm:w-10"
             />
-            <span className="hidden leading-[1.05] sm:block">
-              <span className="block font-mono text-[9px] tracking-[0.34em] text-steel-dim">THE</span>
-              <span className="block font-display text-[19px] tracking-[-0.01em] text-bone">
+            <span className="flex flex-col leading-[1.05]">
+              <span className="block font-mono text-[8px] tracking-[0.26em] text-steel-dim sm:text-[9px] sm:tracking-[0.34em]">THE</span>
+              <span className="block font-display text-[14px] tracking-[-0.01em] text-bone sm:text-[19px]">
                 Security Leader <span className="text-signal-bright">Podcast</span>
               </span>
             </span>
