@@ -11,6 +11,8 @@ export type TeamMember = {
   photo: string;
   bio: string;
   tag: string;
+  objectPosition?: string;
+  zoom?: number;
 };
 
 export function TeamShowcase({
@@ -74,7 +76,12 @@ export function TeamShowcase({
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       loading="lazy"
-                      className="object-cover object-top transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-105"
+                      style={{
+                        objectFit: "cover",
+                        objectPosition: member.objectPosition || "50% 15%",
+                        transform: `scale(${(member.zoom || 100) / 100})`,
+                      }}
+                      className="transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-ink-2 via-ink-2/30 to-transparent" />
 
