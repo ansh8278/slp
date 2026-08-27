@@ -62,6 +62,32 @@ export const DEFAULTS = {
       "Unfiltered industry perspectives from the most influential thought leaders shaping the future of Physical, Electronic, and Cybersecurity. Hosted by the Business Security Alliance.",
     ogImage: "/brand/podcast-hosts-art.png",
   },
+  members: [
+    {
+      id: "member-1",
+      name: "Marcus Vance",
+      role: "Executive Host & CISO Advisor",
+      photo: "/brand/member1.webp",
+      bio: "Over 20 years leading global security enterprise strategies. Spearheads conversations on physical-cyber convergence and C-suite leadership.",
+      tag: "Host",
+    },
+    {
+      id: "member-2",
+      name: "Elena Rostova",
+      role: "Co-Host & Cybersecurity Analyst",
+      photo: "/brand/member2.webp",
+      bio: "Specializes in threat intelligence, cloud resilience, and emerging AI defense vectors across enterprise systems.",
+      tag: "Co-Host",
+    },
+    {
+      id: "member-3",
+      name: "Sophia Lin",
+      role: "Head of Editorial & Executive Producer",
+      photo: "/brand/member3.webp",
+      bio: "Directs show production, executive guest curation, and strategic alliance content across the global security ecosystem.",
+      tag: "Producer",
+    },
+  ],
 };
 
 export type SiteContent = typeof DEFAULTS;

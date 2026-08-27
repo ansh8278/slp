@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import { getContent } from "@/lib/content";
 import { Tilt3D } from "@/components/Tilt3D";
 
+import { TeamShowcase, type TeamMember } from "@/components/TeamShowcase";
+
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -30,7 +32,11 @@ function Prose({ text, className = "" }: { text: string; className?: string }) {
 }
 
 export default async function AboutPage() {
-  const [about, contact] = await Promise.all([getContent("about"), getContent("contact")]);
+  const [about, contact, members] = await Promise.all([
+    getContent("about"),
+    getContent("contact"),
+    getContent("members") as Promise<TeamMember[]>,
+  ]);
 
   return (
     <>
@@ -117,6 +123,9 @@ export default async function AboutPage() {
           </div>
         </Tilt3D>
       </section>
+
+      {/* Team Showcase */}
+      <TeamShowcase members={members} />
 
       {/* what we do */}
       <section className="rule px-[clamp(18px,4vw,56px)] py-[clamp(50px,9vh,120px)]">

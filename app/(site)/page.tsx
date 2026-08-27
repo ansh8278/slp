@@ -10,6 +10,7 @@ import { CDPlayer3D } from "@/components/CDPlayer3D";
 import { getContent } from "@/lib/content";
 import { getEpisodes, getFeatured, formatDate, excerpt, SITE_URL, type PublicEpisode } from "@/lib/site";
 import { formatDuration } from "@/lib/video";
+import { TeamShowcase, type TeamMember } from "@/components/TeamShowcase";
 
 export const dynamic = "force-dynamic";
 
@@ -24,11 +25,12 @@ function toCard(ep: PublicEpisode): EpisodeCardData {
 }
 
 export default async function HomePage() {
-  const [hero, about, topics, contact, featuredRaw, allRaw] = await Promise.all([
+  const [hero, about, topics, contact, members, featuredRaw, allRaw] = await Promise.all([
     getContent("hero"),
     getContent("about"),
     getContent("topics"),
     getContent("contact"),
+    getContent("members") as Promise<TeamMember[]>,
     getFeatured(),
     getEpisodes(),
   ]);
@@ -118,6 +120,9 @@ export default async function HomePage() {
 
       {/* ---- Interactive 3D Audio Recording Showcase ---- */}
       <AudioStudio3D />
+
+      {/* ---- Featured Team Members Showcase ---- */}
+      <TeamShowcase members={members} title="Meet the Voices Behind the Podcast" subtitle="FEATURED HOSTS & LEADERSHIP" />
 
       {/* ---- Episodes ---- */}
       <section id="episodes" className="rule px-[clamp(18px,4vw,56px)] py-[clamp(56px,10vh,130px)]">

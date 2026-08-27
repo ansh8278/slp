@@ -2,6 +2,8 @@ import { getContent } from "@/lib/content";
 import { saveContent } from "@/app/admin/actions";
 import { ActionForm, SubmitButton, Label, inputCls, Panel } from "@/components/admin/ui";
 import { TopicsEditor } from "@/components/admin/TopicsEditor";
+import { MembersEditor } from "@/components/admin/MembersEditor";
+import type { TeamMember } from "@/components/TeamShowcase";
 
 export const dynamic = "force-dynamic";
 
@@ -19,8 +21,13 @@ function Text({ name, label, value, hint, rows }: { name: string; label: string;
 }
 
 export default async function ContentPage() {
-  const [hero, about, topics, contact, seo] = await Promise.all([
-    getContent("hero"), getContent("about"), getContent("topics"), getContent("contact"), getContent("seo"),
+  const [hero, about, topics, contact, seo, members] = await Promise.all([
+    getContent("hero"),
+    getContent("about"),
+    getContent("topics"),
+    getContent("contact"),
+    getContent("seo"),
+    getContent("members") as Promise<TeamMember[]>,
   ]);
 
   return (
@@ -76,6 +83,14 @@ export default async function ContentPage() {
             <Text name="closing" label="Closing statement" value={about.closing} rows={2} />
           </div>
           <div className="mt-6"><SubmitButton>Save about</SubmitButton></div>
+        </Panel>
+      </ActionForm>
+
+      <ActionForm action={saveContent}>
+        <input type="hidden" name="__key" value="members" />
+        <Panel title="Team Members & Leadership" description="Manage executive hosts, co-hosts, and team bios shown on the About page and Homepage showcase.">
+          <MembersEditor members={members} />
+          <div className="mt-6"><SubmitButton>Save team members</SubmitButton></div>
         </Panel>
       </ActionForm>
 

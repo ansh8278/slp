@@ -193,7 +193,16 @@ export async function saveContent(_prev: ActionState, fd: FormData): Promise<Act
   await requireAdmin();
   const key = str(fd, "__key") as ContentKey;
 
-  if (key === "topics") {
+  if (key === "members") {
+    const raw = str(fd, "members_json");
+    let membersList = [];
+    try {
+      membersList = JSON.parse(raw);
+    } catch {
+      membersList = [];
+    }
+    await setContent("members", membersList as SiteContent["members"]);
+  } else if (key === "topics") {
     const titles = fd.getAll("topicTitle").map(String);
     const bodies = fd.getAll("topicBody").map(String);
     const topics = titles
