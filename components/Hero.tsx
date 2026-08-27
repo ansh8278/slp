@@ -202,16 +202,6 @@ export function Hero({ content, latest }: { content: HeroContent; latest: Latest
               </div>
             </div>
 
-            {/* Floating Security Doodle Badge 3 (Middle Right) */}
-            <div
-              className="hero-rise absolute top-1/2 -right-10 z-30 hidden lg:block"
-              style={{ animationDelay: "1.5s" }}
-            >
-              <div className="flex items-center justify-center h-11 w-11 rounded-full border border-steel/25 bg-ink-2/95 shadow-xl backdrop-blur-xl">
-                <DoodleSparkles className="h-5 w-5 text-signal-bright" />
-              </div>
-            </div>
-
             {/* 3D Tilt Main Artwork */}
             <Tilt3D maxTilt={14} scale={1.04} className="relative flex items-center justify-center">
               <div className="relative z-10 aspect-square w-[min(62vw,240px)] lg:w-[520px] xl:w-[600px] drop-shadow-[0_30px_60px_rgba(0,0,0,0.95)] transition-transform duration-700 hover:scale-105">
