@@ -216,7 +216,7 @@ export function Hero({ content, latest }: { content: HeroContent; latest: Latest
             <Tilt3D maxTilt={14} scale={1.04} className="relative flex items-center justify-center">
               <div className="relative z-10 aspect-square w-[min(62vw,240px)] lg:w-[520px] xl:w-[600px] drop-shadow-[0_30px_60px_rgba(0,0,0,0.95)] transition-transform duration-700 hover:scale-105">
                 <Image
-                  src="/brand/slp-real-transparent.png"
+                  src="/brand/hero-real-new.webp"
                   alt="Security Leader Podcast Artwork"
                   fill
                   sizes="(max-width: 1024px) 240px, (max-width: 1280px) 520px, 600px"
