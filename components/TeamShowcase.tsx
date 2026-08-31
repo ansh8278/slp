@@ -52,7 +52,7 @@ export function TeamShowcase({
         </div>
 
         {/* Compact Cyber-Holographic Team Grid */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {members.map((member) => (
             <Tilt3D key={member.id} maxTilt={8} scale={1.02} className="w-full">
               <div className="group preserve-3d relative flex flex-col justify-between overflow-hidden rounded-2xl border border-steel/18 bg-ink-2/90 p-4.5 backdrop-blur-xl transition-all duration-500 hover:border-signal/60 hover:shadow-[0_20px_50px_rgba(31,121,192,0.25)] shadow-lg">
