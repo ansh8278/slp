@@ -193,6 +193,9 @@ export function CDPlayer3D({ initialTracks }: { initialTracks?: CDTrack[] }) {
 
   // playVideo() must run synchronously inside the click for iOS to allow sound.
   const togglePlay = () => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("slp-stop-theme-audio"));
+    }
     const p = playerRef.current;
     if (!p) return;
     if (playingRef.current) p.pauseVideo();

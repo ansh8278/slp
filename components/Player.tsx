@@ -15,7 +15,12 @@ export const usePlayer = () => useContext(PlayerCtx);
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [video, setVideo] = useState<Video | null>(null);
   const reduce = useReducedMotion();
-  const open = useCallback((v: Video) => setVideo(v), []);
+  const open = useCallback((v: Video) => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("slp-stop-theme-audio"));
+    }
+    setVideo(v);
+  }, []);
 
   useEffect(() => {
     if (!video) return;

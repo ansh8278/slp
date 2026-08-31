@@ -38,23 +38,70 @@ const BARS = Array.from({ length: 48 }, (_, i) => ({
   delay: Math.round((((i * 53) % 19) / 20) * 100) / 100,
 }));
 
-function Waveform({ active }: { active: boolean }) {
+const BARS_COUNT = 48;
+
+/**
+ * Real-time sound-reactive waveform visualization using Web Audio API (AnalyserNode).
+ * Dynamically reacts to frequencies and beats of podcast-theme.mp3 in real time.
+ */
+function SoundReactiveWaveform({
+  analyser,
+  isPlaying,
+}: {
+  analyser: AnalyserNode | null;
+  isPlaying: boolean;
+}) {
+  const [barHeights, setBarHeights] = useState<number[]>(() =>
+    Array.from({ length: BARS_COUNT }, (_, i) =>
+      Math.round(14 + Math.abs(Math.sin(i * 1.7) * 45))
+    )
+  );
+
+  useEffect(() => {
+    if (!isPlaying || !analyser) return;
+
+    let animId: number;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const updateBars = () => {
+      analyser.getByteFrequencyData(dataArray);
+
+      const heights: number[] = [];
+      const step = Math.max(1, Math.floor(bufferLength / BARS_COUNT));
+
+      for (let i = 0; i < BARS_COUNT; i++) {
+        const val = dataArray[i * step] || 0;
+        // Map 0-255 byte frequency value to percentage height (12% to 96%)
+        const normalized = Math.min(96, Math.max(12, (val / 255) * 100));
+        heights.push(normalized);
+      }
+
+      setBarHeights(heights);
+      animId = requestAnimationFrame(updateBars);
+    };
+
+    updateBars();
+
+    return () => {
+      cancelAnimationFrame(animId);
+    };
+  }, [isPlaying, analyser]);
+
   return (
     <div aria-hidden className="flex h-[72px] w-full items-end gap-[3px] perspective-1000">
-      {BARS.map((b, i) => (
+      {barHeights.map((h, i) => (
         <span
           key={i}
-          className="block flex-1 origin-bottom rounded-full transition-colors duration-500"
+          className="block flex-1 origin-bottom rounded-full transition-all duration-75"
           style={{
-            height: `${b.h}%`,
+            height: isPlaying ? `${h}%` : "14%",
             background:
               i % 7 === 0
                 ? "var(--color-signal-bright)"
                 : i % 3 === 0
                 ? "var(--color-signal)"
                 : "color-mix(in srgb, var(--color-steel) 34%, transparent)",
-            animation: `slp-bar ${b.dur}s ease-in-out ${b.delay}s infinite`,
-            animationPlayState: active ? "running" : "paused",
             transform: `translateZ(${Math.round(Math.sin(i) * 20)}px)`,
           }}
         />
@@ -64,85 +111,124 @@ function Waveform({ active }: { active: boolean }) {
 }
 
 /**
- * Interactive Audio Equalizer Waveform synced with podcast theme audio.
- * Automatically stops audio when navigating, changing tabs, or playing a video.
+ * Autoplay Podcast Theme Audio with real-time sound-reactive equalizer.
+ * Automatically stops audio when user clicks CD player, opens video, navigates, or tab switches.
  */
-function ThemeAudioWaveform({ onPlayTheme }: { onPlayTheme?: () => void }) {
+function ThemeAudioWaveform() {
   const pathname = usePathname();
   const [playing, setPlaying] = useState(false);
+  const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const stopAudio = useRef(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setPlaying(false);
+  });
 
   useEffect(() => {
     const audio = new Audio("/audio/podcast-theme.mp3");
     audio.loop = true;
+    audio.crossOrigin = "anonymous";
     audioRef.current = audio;
 
-    const handleEnded = () => setPlaying(false);
-    audio.addEventListener("ended", handleEnded);
+    const attemptAutoplay = () => {
+      if (!audioRef.current) return;
+
+      // Connect Web Audio API Analyser Node on first user interaction/play
+      if (!audioCtxRef.current) {
+        try {
+          const AudioContextClass =
+            window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+          const ctx = new AudioContextClass();
+          const node = ctx.createAnalyser();
+          node.fftSize = 128;
+          const source = ctx.createMediaElementSource(audio);
+          source.connect(node);
+          node.connect(ctx.destination);
+
+          audioCtxRef.current = ctx;
+          setAnalyser(node);
+        } catch (e) {
+          console.warn("Web Audio API initialization notice:", e);
+        }
+      }
+
+      if (audioCtxRef.current && audioCtxRef.current.state === "suspended") {
+        audioCtxRef.current.resume();
+      }
+
+      audio
+        .play()
+        .then(() => setPlaying(true))
+        .catch(() => {
+          // If browser blocked unmuted autoplay, start on first user interaction
+          const startOnInteraction = () => {
+            if (audioRef.current) {
+              if (audioCtxRef.current && audioCtxRef.current.state === "suspended") {
+                audioCtxRef.current.resume();
+              }
+              audioRef.current
+                .play()
+                .then(() => setPlaying(true))
+                .catch(console.warn);
+            }
+            window.removeEventListener("pointerdown", startOnInteraction);
+            window.removeEventListener("scroll", startOnInteraction);
+            window.removeEventListener("keydown", startOnInteraction);
+          };
+
+          window.addEventListener("pointerdown", startOnInteraction, { once: true });
+          window.addEventListener("scroll", startOnInteraction, { once: true });
+          window.addEventListener("keydown", startOnInteraction, { once: true });
+        });
+    };
+
+    attemptAutoplay();
+
+    // Listen for custom stop events (CD Player, Video Modal, etc.)
+    const handleCustomStop = () => stopAudio.current();
+    window.addEventListener("slp-stop-theme-audio", handleCustomStop);
 
     return () => {
-      audio.removeEventListener("ended", handleEnded);
-      audio.pause();
-      audio.currentTime = 0;
+      window.removeEventListener("slp-stop-theme-audio", handleCustomStop);
+      stopAudio.current();
       audioRef.current = null;
     };
   }, []);
 
-  // Stop audio on page change / navigation
+  // Stop audio on page navigation
   useEffect(() => {
-    if (audioRef.current && playing) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setPlaying(false);
-    }
+    stopAudio.current();
   }, [pathname]);
 
-  // Stop audio when tab loses visibility
+  // Stop audio when tab loses focus
   useEffect(() => {
     const onVis = () => {
-      if (document.hidden && audioRef.current && playing) {
-        audioRef.current.pause();
-        setPlaying(false);
-      }
+      if (document.hidden) stopAudio.current();
     };
     document.addEventListener("visibilitychange", onVis);
     return () => document.removeEventListener("visibilitychange", onVis);
-  }, [playing]);
-
-  const togglePlay = () => {
-    if (!audioRef.current) return;
-    if (playing) {
-      audioRef.current.pause();
-      setPlaying(false);
-    } else {
-      if (onPlayTheme) onPlayTheme();
-      audioRef.current
-        .play()
-        .then(() => setPlaying(true))
-        .catch((err) => console.warn("Audio play blocked:", err));
-    }
-  };
+  }, []);
 
   return (
-    <button
-      type="button"
-      onClick={togglePlay}
-      aria-label={playing ? "Pause Podcast Theme Music" : "Play Podcast Theme Music"}
-      title={playing ? "Click to Pause Audio" : "Click to Play Theme Music & Equalizer"}
-      className="group relative flex w-full cursor-pointer flex-col gap-2 rounded-2xl border border-steel/20 bg-ink-2/90 p-3.5 backdrop-blur-md transition-all duration-300 hover:border-signal/60 hover:shadow-xl text-left"
-    >
+    <div className="flex w-full flex-col gap-2 rounded-2xl border border-steel/20 bg-ink-2/90 p-3.5 backdrop-blur-md shadow-lg">
       <div className="flex items-center justify-between w-full">
         <span className="flex items-center gap-2 font-mono text-[10px] tracking-[0.2em] text-signal-bright uppercase font-bold">
           <span className={`h-2 w-2 rounded-full ${playing ? "bg-signal-bright animate-ping" : "bg-steel-dim"}`} />
-          {playing ? "Theme Music Playing" : "Theme Music & Equalizer"}
+          {playing ? "Theme Soundwave Active" : "Podcast Audio"}
         </span>
-        <span className="flex items-center gap-1.5 rounded-full border border-steel/25 bg-ink-3 px-3 py-1 font-mono text-[10px] text-bone group-hover:border-signal">
-          {playing ? "⏸ Pause Audio" : "▶ Play Theme"}
+        <span className="font-mono text-[9.5px] tracking-[0.16em] text-steel-dim uppercase">
+          {playing ? "Real-time Freq Sync" : "Standby"}
         </span>
       </div>
 
-      <Waveform active={playing} />
-    </button>
+      <SoundReactiveWaveform analyser={analyser} isPlaying={playing} />
+    </div>
   );
 }
 
