@@ -95,6 +95,9 @@ export default async function AboutPage() {
         </div>
       </section>
 
+      {/* Team Showcase — Prominently Highlighted at Top */}
+      <TeamShowcase members={members} />
+
       {/* who we are */}
       <section className="rule px-[clamp(18px,4vw,56px)] py-[clamp(50px,9vh,120px)]">
         <div className="shell grid gap-[clamp(28px,5vw,86px)] px-0 lg:grid-cols-[0.75fr_1.25fr]">
@@ -123,9 +126,6 @@ export default async function AboutPage() {
           </div>
         </Tilt3D>
       </section>
-
-      {/* Team Showcase */}
-      <TeamShowcase members={members} />
 
       {/* what we do */}
       <section className="rule px-[clamp(18px,4vw,56px)] py-[clamp(50px,9vh,120px)]">
