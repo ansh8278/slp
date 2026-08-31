@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { usePlayer, PlayGlyph } from "./Player";
 import { Tilt3D } from "./Tilt3D";
 import {
@@ -39,7 +40,7 @@ const BARS = Array.from({ length: 48 }, (_, i) => ({
 
 function Waveform({ active }: { active: boolean }) {
   return (
-    <div aria-hidden className="flex h-[80px] w-full items-end gap-[3px] perspective-1000">
+    <div aria-hidden className="flex h-[72px] w-full items-end gap-[3px] perspective-1000">
       {BARS.map((b, i) => (
         <span
           key={i}
@@ -59,6 +60,89 @@ function Waveform({ active }: { active: boolean }) {
         />
       ))}
     </div>
+  );
+}
+
+/**
+ * Interactive Audio Equalizer Waveform synced with podcast theme audio.
+ * Automatically stops audio when navigating, changing tabs, or playing a video.
+ */
+function ThemeAudioWaveform({ onPlayTheme }: { onPlayTheme?: () => void }) {
+  const pathname = usePathname();
+  const [playing, setPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const audio = new Audio("/audio/podcast-theme.mp3");
+    audio.loop = true;
+    audioRef.current = audio;
+
+    const handleEnded = () => setPlaying(false);
+    audio.addEventListener("ended", handleEnded);
+
+    return () => {
+      audio.removeEventListener("ended", handleEnded);
+      audio.pause();
+      audio.currentTime = 0;
+      audioRef.current = null;
+    };
+  }, []);
+
+  // Stop audio on page change / navigation
+  useEffect(() => {
+    if (audioRef.current && playing) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      setPlaying(false);
+    }
+  }, [pathname]);
+
+  // Stop audio when tab loses visibility
+  useEffect(() => {
+    const onVis = () => {
+      if (document.hidden && audioRef.current && playing) {
+        audioRef.current.pause();
+        setPlaying(false);
+      }
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [playing]);
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (playing) {
+      audioRef.current.pause();
+      setPlaying(false);
+    } else {
+      if (onPlayTheme) onPlayTheme();
+      audioRef.current
+        .play()
+        .then(() => setPlaying(true))
+        .catch((err) => console.warn("Audio play blocked:", err));
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={togglePlay}
+      aria-label={playing ? "Pause Podcast Theme Music" : "Play Podcast Theme Music"}
+      title={playing ? "Click to Pause Audio" : "Click to Play Theme Music & Equalizer"}
+      className="group relative flex w-full cursor-pointer flex-col gap-2 rounded-2xl border border-steel/20 bg-ink-2/90 p-3.5 backdrop-blur-md transition-all duration-300 hover:border-signal/60 hover:shadow-xl text-left"
+    >
+      <div className="flex items-center justify-between w-full">
+        <span className="flex items-center gap-2 font-mono text-[10px] tracking-[0.2em] text-signal-bright uppercase font-bold">
+          <span className={`h-2 w-2 rounded-full ${playing ? "bg-signal-bright animate-ping" : "bg-steel-dim"}`} />
+          {playing ? "Theme Music Playing" : "Theme Music & Equalizer"}
+        </span>
+        <span className="flex items-center gap-1.5 rounded-full border border-steel/25 bg-ink-3 px-3 py-1 font-mono text-[10px] text-bone group-hover:border-signal">
+          {playing ? "⏸ Pause Audio" : "▶ Play Theme"}
+        </span>
+      </div>
+
+      <Waveform active={playing} />
+    </button>
   );
 }
 
@@ -248,9 +332,9 @@ export function Hero({ content, latest }: { content: HeroContent; latest: Latest
             <span />
           )}
 
-          {/* Equalizer Waveform */}
-          <div className="hidden justify-self-end lg:block lg:w-full">
-            <Waveform active={visible} />
+          {/* Equalizer Waveform with Synced Theme Audio */}
+          <div className="justify-self-end w-full">
+            <ThemeAudioWaveform />
           </div>
         </div>
 
