@@ -72,7 +72,6 @@ function WaveformBars({ active }: { active: boolean }) {
 function ThemeAudioWaveform() {
   const pathname = usePathname();
   const [playing, setPlaying] = useState(false);
-  const [userGestureNeeded, setUserGestureNeeded] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -81,50 +80,51 @@ function ThemeAudioWaveform() {
     audio.preload = "auto";
     audioRef.current = audio;
 
+    const unmuteOnMovement = () => {
+      if (audioRef.current) {
+        audioRef.current.muted = false;
+      }
+      cleanupListeners();
+    };
+
+    const cleanupListeners = () => {
+      window.removeEventListener("mousemove", unmuteOnMovement);
+      window.removeEventListener("pointerdown", unmuteOnMovement);
+      window.removeEventListener("scroll", unmuteOnMovement);
+      window.removeEventListener("touchstart", unmuteOnMovement);
+      window.removeEventListener("keydown", unmuteOnMovement);
+      window.removeEventListener("click", unmuteOnMovement);
+    };
+
     const startSound = () => {
       if (!audioRef.current) return;
       audioRef.current.muted = false;
       audioRef.current
         .play()
-        .then(() => {
-          setPlaying(true);
-          setUserGestureNeeded(false);
-        })
+        .then(() => setPlaying(true))
         .catch(() => {
-          // If browser blocked unmuted autoplay on load, set state so prompt button glows
-          setUserGestureNeeded(true);
+          // If browser policy blocks unmuted autoplay, start muted autoplay (100% allowed) & unmute on movement
+          if (audioRef.current) {
+            audioRef.current.muted = true;
+            audioRef.current
+              .play()
+              .then(() => setPlaying(true))
+              .catch(console.warn);
+          }
 
-          const startOnInteraction = () => {
-            if (audioRef.current) {
-              audioRef.current.muted = false;
-              audioRef.current
-                .play()
-                .then(() => {
-                  setPlaying(true);
-                  setUserGestureNeeded(false);
-                })
-                .catch(console.warn);
-            }
-            cleanupGestures();
-          };
-
-          const cleanupGestures = () => {
-            window.removeEventListener("pointerdown", startOnInteraction);
-            window.removeEventListener("scroll", startOnInteraction);
-            window.removeEventListener("click", startOnInteraction);
-            window.removeEventListener("touchstart", startOnInteraction);
-          };
-
-          window.addEventListener("pointerdown", startOnInteraction, { once: true });
-          window.addEventListener("scroll", startOnInteraction, { once: true });
-          window.addEventListener("click", startOnInteraction, { once: true });
-          window.addEventListener("touchstart", startOnInteraction, { once: true });
+          window.addEventListener("mousemove", unmuteOnMovement, { once: true });
+          window.addEventListener("pointerdown", unmuteOnMovement, { once: true });
+          window.addEventListener("scroll", unmuteOnMovement, { once: true });
+          window.addEventListener("touchstart", unmuteOnMovement, { once: true });
+          window.addEventListener("keydown", unmuteOnMovement, { once: true });
+          window.addEventListener("click", unmuteOnMovement, { once: true });
         });
     };
 
     startSound();
 
     const handleCustomStop = () => {
+      cleanupListeners();
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
@@ -135,6 +135,7 @@ function ThemeAudioWaveform() {
     window.addEventListener("slp-stop-theme-audio", handleCustomStop);
 
     return () => {
+      cleanupListeners();
       window.removeEventListener("slp-stop-theme-audio", handleCustomStop);
       if (audioRef.current) {
         audioRef.current.pause();
@@ -175,10 +176,7 @@ function ThemeAudioWaveform() {
       audioRef.current.muted = false;
       audioRef.current
         .play()
-        .then(() => {
-          setPlaying(true);
-          setUserGestureNeeded(false);
-        })
+        .then(() => setPlaying(true))
         .catch(console.warn);
     }
   };
@@ -194,7 +192,7 @@ function ThemeAudioWaveform() {
       <div className="flex items-center justify-between w-full">
         <span className="flex items-center gap-2 font-mono text-[10.5px] tracking-[0.2em] text-signal-bright uppercase font-bold">
           <span className={`h-2.5 w-2.5 rounded-full ${playing ? "bg-signal-bright animate-ping" : "bg-steel-dim"}`} />
-          {playing ? "Theme Sound Playing" : userGestureNeeded ? "Tap for Audio" : "Theme Audio"}
+          {playing ? "Theme Sound Playing" : "Theme Audio"}
         </span>
 
         {/* Floating Sound Toggle Pill */}
@@ -202,12 +200,10 @@ function ThemeAudioWaveform() {
           className={`flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[10.5px] font-bold uppercase transition-all duration-300 ${
             playing
               ? "border-signal-bright/40 bg-signal/20 text-signal-bright shadow-lg shadow-signal/20"
-              : userGestureNeeded
-              ? "border-signal bg-signal text-bone animate-pulse shadow-xl"
               : "border-steel/25 bg-ink-3 text-bone"
           }`}
         >
-          {playing ? "🔊 SOUND ON" : userGestureNeeded ? "🔊 TAP SOUND ON" : "🔇 MUTED"}
+          {playing ? "🔊 SOUND ON" : "🔇 MUTED"}
         </span>
       </div>
 
