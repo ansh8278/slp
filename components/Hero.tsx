@@ -80,34 +80,49 @@ function ThemeAudioWaveform() {
     audio.preload = "auto";
     audioRef.current = audio;
 
+    const unmuteOnInteraction = () => {
+      if (audioRef.current) {
+        audioRef.current.muted = false;
+        audioRef.current
+          .play()
+          .then(() => setPlaying(true))
+          .catch(console.warn);
+      }
+      cleanupInteractionListeners();
+    };
+
+    const cleanupInteractionListeners = () => {
+      window.removeEventListener("pointerdown", unmuteOnInteraction);
+      window.removeEventListener("mousemove", unmuteOnInteraction);
+      window.removeEventListener("touchstart", unmuteOnInteraction);
+      window.removeEventListener("scroll", unmuteOnInteraction);
+      window.removeEventListener("keydown", unmuteOnInteraction);
+      window.removeEventListener("click", unmuteOnInteraction);
+    };
+
     const playAudio = () => {
       if (!audioRef.current) return;
+
+      // Attempt unmuted play first
       audioRef.current
         .play()
         .then(() => setPlaying(true))
         .catch(() => {
-          // If browser blocked unmuted autoplay before interaction, attach one-time gesture listeners
-          const startOnGesture = () => {
-            if (audioRef.current) {
-              audioRef.current
-                .play()
-                .then(() => setPlaying(true))
-                .catch(console.warn);
-            }
-            cleanupGestures();
-          };
+          // If browser policy blocks unmuted autoplay, play muted & unmute on first cursor move/scroll
+          if (audioRef.current) {
+            audioRef.current.muted = true;
+            audioRef.current
+              .play()
+              .then(() => setPlaying(true))
+              .catch(console.warn);
+          }
 
-          const cleanupGestures = () => {
-            window.removeEventListener("pointerdown", startOnGesture);
-            window.removeEventListener("scroll", startOnGesture);
-            window.removeEventListener("keydown", startOnGesture);
-            window.removeEventListener("click", startOnGesture);
-          };
-
-          window.addEventListener("pointerdown", startOnGesture, { once: true });
-          window.addEventListener("scroll", startOnGesture, { once: true });
-          window.addEventListener("keydown", startOnGesture, { once: true });
-          window.addEventListener("click", startOnGesture, { once: true });
+          window.addEventListener("pointerdown", unmuteOnInteraction, { once: true });
+          window.addEventListener("mousemove", unmuteOnInteraction, { once: true });
+          window.addEventListener("touchstart", unmuteOnInteraction, { once: true });
+          window.addEventListener("scroll", unmuteOnInteraction, { once: true });
+          window.addEventListener("keydown", unmuteOnInteraction, { once: true });
+          window.addEventListener("click", unmuteOnInteraction, { once: true });
         });
     };
 
@@ -115,6 +130,7 @@ function ThemeAudioWaveform() {
 
     // Listen for custom stop events (CD Player, Video Modal, etc.)
     const handleCustomStop = () => {
+      cleanupInteractionListeners();
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
@@ -125,6 +141,7 @@ function ThemeAudioWaveform() {
     window.addEventListener("slp-stop-theme-audio", handleCustomStop);
 
     return () => {
+      cleanupInteractionListeners();
       window.removeEventListener("slp-stop-theme-audio", handleCustomStop);
       if (audioRef.current) {
         audioRef.current.pause();
@@ -156,39 +173,20 @@ function ThemeAudioWaveform() {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
 
-  const togglePlay = () => {
-    if (!audioRef.current) return;
-    if (playing) {
-      audioRef.current.pause();
-      setPlaying(false);
-    } else {
-      audioRef.current
-        .play()
-        .then(() => setPlaying(true))
-        .catch(console.warn);
-    }
-  };
-
   return (
-    <button
-      type="button"
-      onClick={togglePlay}
-      aria-label={playing ? "Pause Podcast Theme Audio" : "Play Podcast Theme Audio"}
-      title={playing ? "Click to Pause Audio" : "Click to Play Podcast Theme Audio"}
-      className="group relative flex w-full cursor-pointer flex-col gap-2 rounded-2xl border border-steel/20 bg-ink-2/90 p-3.5 backdrop-blur-md transition-all duration-300 hover:border-signal/60 hover:shadow-xl text-left"
-    >
+    <div className="flex w-full flex-col gap-2 rounded-2xl border border-steel/20 bg-ink-2/90 p-3.5 backdrop-blur-md shadow-lg">
       <div className="flex items-center justify-between w-full">
         <span className="flex items-center gap-2 font-mono text-[10px] tracking-[0.2em] text-signal-bright uppercase font-bold">
           <span className={`h-2 w-2 rounded-full ${playing ? "bg-signal-bright animate-ping" : "bg-steel-dim"}`} />
           {playing ? "Theme Audio Playing" : "Podcast Audio"}
         </span>
-        <span className="flex items-center gap-1.5 rounded-full border border-steel/25 bg-ink-3 px-3 py-1 font-mono text-[10px] text-bone group-hover:border-signal">
-          {playing ? "⏸ Pause Audio" : "▶ Play Audio"}
+        <span className="font-mono text-[9.5px] tracking-[0.16em] text-steel-dim uppercase">
+          {playing ? "Live Soundwave" : "Standby"}
         </span>
       </div>
 
       <WaveformBars active={playing} />
-    </button>
+    </div>
   );
 }
 
