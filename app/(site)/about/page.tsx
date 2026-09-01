@@ -5,6 +5,7 @@ import { getContent } from "@/lib/content";
 import { Tilt3D } from "@/components/Tilt3D";
 
 import { TeamShowcase, type TeamMember } from "@/components/TeamShowcase";
+import { AboutImageSlideshow } from "@/components/AboutImageSlideshow";
 
 export const dynamic = "force-dynamic";
 
@@ -60,27 +61,9 @@ export default async function AboutPage() {
             </h1>
           </div>
 
-          {/* Right Microphone Artwork */}
+          {/* Smooth Fading Image Slideshow */}
           <div className="relative flex justify-center lg:justify-end items-center">
-            <Tilt3D maxTilt={14} scale={1.03} className="relative z-10 w-full max-w-[480px]">
-              <div className="preserve-3d relative flex items-center justify-center min-h-[360px] sm:min-h-[440px]">
-                {/* Neon Glow Aura */}
-                <div
-                  aria-hidden
-                  className="absolute h-[300px] w-[300px] sm:h-[380px] sm:w-[380px] rounded-full bg-radial from-signal/30 via-signal-bright/15 to-transparent blur-3xl opacity-80 animate-pulse-3d"
-                />
-                <div className="relative z-10 h-[340px] w-[300px] sm:h-[440px] sm:w-[380px] drop-shadow-[0_20px_35px_rgba(0,0,0,0.85)]">
-                  <Image
-                    src="/brand/mic-hero-perfect.png"
-                    alt="Security Leader Microphone"
-                    fill
-                    priority
-                    sizes="(max-width: 640px) 300px, 380px"
-                    className="object-contain transition-transform duration-700 hover:scale-105"
-                  />
-                </div>
-              </div>
-            </Tilt3D>
+            <AboutImageSlideshow />
           </div>
         </div>
       </section>
