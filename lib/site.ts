@@ -1,6 +1,6 @@
 import { prisma } from "./db";
 
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://securityleaderpodcast.com";
 
 export type PublicEpisode = {
   id: string;
