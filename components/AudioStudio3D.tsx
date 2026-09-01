@@ -1,10 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { Tilt3D } from "./Tilt3D";
 import { DoodleMic, DoodleRadar, DoodleShield } from "./DoodleIcons";
+
+const SECTION_SLIDES = [
+  { src: "/brand/about-slide-1.webp", alt: "Security Leader Character 1" },
+  { src: "/brand/about-slide-2.webp", alt: "Security Leader Character 2" },
+  { src: "/brand/about-slide-3.webp", alt: "Security Leader Character 3" },
+];
 
 const RECORDING_BARS = [
   { h: 40, delay: 0 },
@@ -26,6 +32,14 @@ const RECORDING_BARS = [
 export function AudioStudio3D() {
   const [isPlaying, setIsPlaying] = useState(true);
   const [seconds, setSeconds] = useState(42);
+  const [slideIndex, setSlideIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSlideIndex((prev) => (prev + 1) % SECTION_SLIDES.length);
+    }, 3600);
+    return () => clearInterval(timer);
+  }, []);
 
   const toggleRecording = () => {
     setIsPlaying((prev) => !prev);
@@ -62,16 +76,27 @@ export function AudioStudio3D() {
             }}
           />
 
-          {/* Central 3D Cartoon Listener / Host Character */}
-          <div className="relative z-10 h-[320px] w-full max-w-[300px] sm:h-[520px] sm:w-[440px] sm:max-w-none flex items-center justify-center drop-shadow-[0_20px_30px_rgba(0,0,0,0.8)]">
-            <Image
-              src="/brand/cartoon-listener-perfect.png"
-              alt="Security Leader Podcast Cartoon Listener"
-              fill
-              sizes="(max-width: 640px) 300px, 440px"
-              priority
-              className="object-contain transition-transform duration-700 hover:scale-105"
-            />
+          {/* Central 3D Cartoon Listener / Host Character — Auto Fading Slideshow */}
+          <div className="relative z-10 h-[320px] w-full max-w-[300px] sm:h-[520px] sm:w-[440px] sm:max-w-none flex items-center justify-center drop-shadow-[0_20px_30px_rgba(0,0,0,0.8)] overflow-hidden">
+            <AnimatePresence mode="sync">
+              <motion.div
+                key={slideIndex}
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.02 }}
+                transition={{ duration: 0.9, ease: "easeInOut" }}
+                className="absolute inset-0 h-full w-full flex items-center justify-center"
+              >
+                <Image
+                  src={SECTION_SLIDES[slideIndex].src}
+                  alt={SECTION_SLIDES[slideIndex].alt}
+                  fill
+                  sizes="(max-width: 640px) 300px, 440px"
+                  priority={slideIndex === 0}
+                  className="object-contain transition-transform duration-700 hover:scale-105"
+                />
+              </motion.div>
+            </AnimatePresence>
           </div>
 
           {/* Phones stack the four badges below the character; from sm up `contents`
